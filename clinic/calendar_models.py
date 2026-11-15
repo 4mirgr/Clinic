@@ -37,6 +37,15 @@ class ScheduleSettings(models.Model):
     horizon_days = models.PositiveSmallIntegerField('حداکثر فاصله رزرو (روز)',default=30)
 
 
+class AvailabilityOverride(models.Model):
+    day = models.DateField(unique=True)
+    closed = models.BooleanField(default=False)
+    windows = models.JSONField(default=list)
+
+    class Meta:
+        ordering = ['day']
+
+
 class Appointment(models.Model):
     STATUS = [('pending','در انتظار ثبت گوگل'),('confirmed','ثبت‌شده در گوگل'),('cancel_pending','لغو در انتظار تأیید'),('conflict_cancelling','لغو نوبت دارای تداخل، در انتظار تأیید'),('cancelled','لغوشده'),('conflict','تداخل در گوگل؛ زمان جدید لازم است'),('attention','نیازمند بررسی پزشک')]
     RESERVING = ['pending','confirmed','cancel_pending','attention']
@@ -52,6 +61,7 @@ class Appointment(models.Model):
     next_retry_at = models.DateTimeField(default=timezone.now)
     last_error = models.CharField(max_length=250,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    request_key = models.UUIDField(unique=True,null=True,blank=True,editable=False)
 
     class Meta:
         ordering = ['-starts_at']

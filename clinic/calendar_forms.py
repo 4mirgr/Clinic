@@ -1,7 +1,10 @@
 from django import forms
+from django.core import signing
 from django.utils import timezone
+import uuid
 
-from .calendar_models import ScheduleSettings
+from .calendar_models import ScheduleSettings,AvailabilityOverride
+from .jalali import JalaliDateField,today_tehran
 from .models import Patient
 
 WEEKDAYS = [('5','شنبه'),('6','یکشنبه'),('0','دوشنبه'),('1','سه‌شنبه'),('2','چهارشنبه'),('3','پنجشنبه'),('4','جمعه')]
@@ -35,10 +38,51 @@ class ScheduleForm(forms.ModelForm):
 
 class BookingForm(forms.Form):
     patient = forms.ModelChoiceField(queryset=Patient.objects.none(),label='بیمار')
-    day = forms.DateField(label='تاریخ مراجعه (میلادی)',widget=forms.DateInput(attrs={'type':'date'}))
+    day = JalaliDateField(label='تاریخ مراجعه (هجری شمسی)',initial=today_tehran)
+    slot_start = forms.DateTimeField(widget=forms.HiddenInput)
+    request_token = forms.CharField(widget=forms.HiddenInput)
 
     def __init__(self,*args,**kwargs):
+        self.actor = kwargs.pop('actor',None)
         super().__init__(*args,**kwargs)
         self.fields['patient'].queryset = Patient.objects.order_by('last_name','first_name')
         self.fields['patient'].label_from_instance = lambda patient: patient.full_name
-        self.fields['day'].widget.attrs['min'] = timezone.localdate().isoformat()
+        if not self.is_bound and self.actor:
+            self.fields['request_token'].initial = signing.dumps({'key':uuid.uuid4().hex,'user':self.actor.pk},salt='clinic.booking')
+
+    def clean_request_token(self):
+        try:
+            data = signing.loads(self.cleaned_data['request_token'],salt='clinic.booking',max_age=1800)
+            if not self.actor or data['user'] != self.actor.pk:
+                raise ValueError()
+            return uuid.UUID(data['key'])
+        except (signing.BadSignature,ValueError,KeyError,TypeError):
+            raise forms.ValidationError('فرم رزرو منقضی یا نامعتبر است؛ صفحه را تازه کنید.') from None
+
+
+class AvailabilityForm(forms.Form):
+    day = JalaliDateField(label='روز موردنظر (هجری شمسی)',initial=today_tehran)
+    closed = forms.BooleanField(label='این روز تعطیل باشد',required=False)
+    opens_at = forms.TimeField(label='شروع بازه اول',required=False,widget=forms.TimeInput(attrs={'type':'time'}))
+    closes_at = forms.TimeField(label='پایان بازه اول',required=False,widget=forms.TimeInput(attrs={'type':'time'}))
+    opens_second = forms.TimeField(label='شروع بازه دوم (اختیاری)',required=False,widget=forms.TimeInput(attrs={'type':'time'}))
+    closes_second = forms.TimeField(label='پایان بازه دوم (اختیاری)',required=False,widget=forms.TimeInput(attrs={'type':'time'}))
+
+    def clean(self):
+        data = super().clean()
+        if data.get('closed'):
+            data['windows'] = []
+            return data
+        windows = []
+        for opening,closing in [('opens_at','closes_at'),('opens_second','closes_second')]:
+            start,end = data.get(opening),data.get(closing)
+            if not start and not end and windows:
+                continue
+            if not start or not end or end <= start:
+                raise forms.ValidationError('هر بازه باید شروع و پایان معتبر در همان روز داشته باشد.')
+            windows.append({'start':start.strftime('%H:%M'),'end':end.strftime('%H:%M')})
+        windows.sort(key=lambda item:item['start'])
+        if len(windows) == 2 and windows[0]['end'] > windows[1]['start']:
+            raise forms.ValidationError('بازه‌های کاری نباید با هم تداخل داشته باشند.')
+        data['windows'] = windows
+        return data

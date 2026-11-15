@@ -1,11 +1,11 @@
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta,time
 from zoneinfo import ZoneInfo
 
 from django.db import transaction
 from django.utils import timezone
 
 from .calendar_api import CalendarUnavailable,GoogleCalendar,configured
-from .calendar_models import Appointment,CalendarConnection,ScheduleSettings
+from .calendar_models import Appointment,AvailabilityOverride,CalendarConnection,ScheduleSettings
 from .models import AuditEvent
 
 TZ = ZoneInfo('Asia/Tehran')
@@ -19,40 +19,84 @@ def overlaps(start,end,intervals):
     return any(start < busy_end and end > busy_start for busy_start,busy_end in intervals)
 
 
-def book_next_available(patient,day,actor,provider=None):
+def working_windows(day,schedule):
+    today = timezone.localdate(timezone.now(),TZ)
+    if not schedule.enabled or day < today or day > today+timedelta(days=schedule.horizon_days):
+        return []
+    override = AvailabilityOverride.objects.filter(day=day).first()
+    if override:
+        if override.closed:
+            return []
+        try:
+            return [(datetime.combine(day,time.fromisoformat(w['start']),TZ),datetime.combine(day,time.fromisoformat(w['end']),TZ)) for w in override.windows]
+        except (ValueError,KeyError,TypeError):
+            raise BookingError('بازه‌های این روز معتبر نیست؛ تنظیمات بررسی شود.') from None
+    if day.weekday() not in schedule.weekdays or not schedule.opens_at or not schedule.closes_at:
+        return []
+    return [(datetime.combine(day,schedule.opens_at,TZ),datetime.combine(day,schedule.closes_at,TZ))]
+
+
+def active_connection():
+    connection = CalendarConnection.objects.filter(pk=1,active=True).first()
+    if not connection or not configured():
+        raise BookingError('ابتدا حساب گوگل پزشک باید متصل شود.')
+    return connection
+
+
+def available_slots(day,provider=None,exclude=None,schedule=None):
+    connection = active_connection()
+    schedule = schedule or ScheduleSettings.objects.get_or_create(pk=1)[0]
+    windows = working_windows(day,schedule)
+    if not windows:
+        return []
+    provider = provider or GoogleCalendar(connection)
+    beginning,closing = min(w[0] for w in windows),max(w[1] for w in windows)
+    busy = provider.free_busy_except(beginning,closing,exclude) if exclude else provider.free_busy(beginning,closing)
+    records = Appointment.objects.filter(status__in=Appointment.RESERVING,starts_at__lt=closing,ends_at__gt=beginning)
+    if exclude:
+        records = records.exclude(pk=exclude.pk)
+    busy += list(records.values_list('starts_at','ends_at'))
+    duration = timedelta(minutes=schedule.slot_minutes)
+    if schedule.slot_minutes < 5:
+        raise BookingError('مدت ویزیت معتبر نیست.')
+    result = []
+    for start,end in windows:
+        while start+duration <= end:
+            if start >= timezone.now() and not overlaps(start,start+duration,busy):
+                result.append((start,start+duration))
+            start += duration
+    return result
+
+
+def _reserve(patient,day,actor,selected=None,provider=None,request_key=None):
     ScheduleSettings.objects.get_or_create(pk=1)
     with transaction.atomic():
         schedule = ScheduleSettings.objects.select_for_update().get(pk=1)
-        connection = CalendarConnection.objects.filter(pk=1,active=True).first()
-        if not connection or not configured():
-            raise BookingError('ابتدا حساب گوگل را متصل کنید.')
-        if not schedule.enabled or not schedule.opens_at or not schedule.closes_at or day.weekday() not in schedule.weekdays:
-            raise BookingError('نوبت‌دهی برای این روز فعال نیست؛ ساعات کاری را بررسی کنید.')
-        today = timezone.localdate(timezone.now(),TZ)
-        if day < today or day > today + timedelta(days=schedule.horizon_days):
-            raise BookingError('تاریخ انتخاب‌شده خارج از بازه مجاز رزرو است.')
-        start = datetime.combine(day,schedule.opens_at,tzinfo=TZ)
-        closing = datetime.combine(day,schedule.closes_at,tzinfo=TZ)
-        if schedule.slot_minutes < 5 or closing <= start:
-            raise BookingError('تنظیم ساعات و مدت ویزیت معتبر نیست.')
+        if request_key:
+            existing = Appointment.objects.filter(request_key=request_key).first()
+            if existing:
+                if existing.patient_id != patient.pk or existing.created_by_id != actor.pk or timezone.localdate(existing.starts_at,TZ) != day:
+                    raise BookingError('این فرم برای نوبت دیگری استفاده شده؛ صفحه را تازه کنید.')
+                return existing
+        connection = active_connection()
         provider = provider or GoogleCalendar(connection)
-        busy = provider.free_busy(start,closing)
-        busy += list(Appointment.objects.filter(status__in=Appointment.RESERVING,starts_at__lt=closing,ends_at__gt=start).values_list('starts_at','ends_at'))
-        duration = timedelta(minutes=schedule.slot_minutes)
-        selected = None
-        while start + duration <= closing:
-            if start >= timezone.now() and not overlaps(start,start+duration,busy):
-                selected = start
-                break
-            start += duration
-        if selected is None:
-            raise BookingError('در این روز زمان آزادی پیدا نشد؛ روز دیگری را انتخاب کنید.')
-        appointment = Appointment.objects.create(patient=patient,created_by=actor,starts_at=selected,ends_at=selected+duration,connection_generation=connection.generation)
+        slots = available_slots(day,provider=provider,schedule=schedule)
+        choice = next((slot for slot in slots if selected is None or slot[0] == selected),None)
+        if choice is None:
+            raise BookingError('این ساعت آزاد نیست یا خارج از برنامه مطب است؛ وقت دیگری انتخاب کنید.')
+        appointment = Appointment.objects.create(patient=patient,created_by=actor,starts_at=choice[0],ends_at=choice[1],connection_generation=connection.generation,request_key=request_key)
         AuditEvent.objects.create(actor=actor,action='appointment.reserve',target=str(appointment.pk))
-    # Reservation commits before a remote write; uncertain writes remain durably retryable.
     sync_appointment(appointment.pk,actor,provider=provider,force=True)
     appointment.refresh_from_db()
     return appointment
+
+
+def book_next_available(patient,day,actor,provider=None):
+    return _reserve(patient,day,actor,provider=provider)
+
+
+def book_selected_slot(patient,day,selected,actor,provider=None,request_key=None):
+    return _reserve(patient,day,actor,selected=selected,provider=provider,request_key=request_key)
 
 
 def sync_appointment(pk,actor=None,provider=None,force=False):

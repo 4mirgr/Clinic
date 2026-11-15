@@ -22,7 +22,7 @@ class CalendarAccessTests(TestCase):
     def test_calendar_requires_manager_even_for_direct_posts(self):
         self.assertEqual(self.client.get('/dash/calendar/').status_code,302)
         self.client.force_login(self.secretary)
-        for url in ['/dash/calendar/','/dash/calendar/settings/','/dash/calendar/connect/','/dash/calendar/disconnect/','/dash/calendar/book/','/dash/calendar/oauth/callback/']:
+        for url in ['/dash/calendar/connect/','/dash/calendar/disconnect/','/dash/calendar/oauth/callback/']:
             self.assertEqual(self.client.get(url).status_code,403,url)
             self.assertEqual(self.client.post(url).status_code,403,url)
 

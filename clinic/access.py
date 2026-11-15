@@ -23,3 +23,14 @@ def manager_required(view):
             raise PermissionDenied
         return view(request, *args, **kwargs)
     return wrapped
+
+
+def calendar_staff_required(view):
+    @wraps(view)
+    def wrapped(request,*args,**kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login_choice')
+        if role_for(request.user) not in ('manager','secretary'):
+            raise PermissionDenied
+        return view(request,*args,**kwargs)
+    return wrapped
