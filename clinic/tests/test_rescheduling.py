@@ -78,6 +78,22 @@ class ReschedulingTests(TestCase):
         self.assertEqual(result.status,'cancelled');self.assertIsNone(result.previous_starts_at)
         self.assertIn(old,[a for a,b in available_slots(self.day,provider=self.provider)])
 
+    def test_failed_cancellation_of_uncertain_edit_retains_both_holds(self):
+        from clinic.calendar_api import CalendarUnavailable
+        from clinic.scheduling import reschedule_appointment,request_cancellation,available_slots
+        old=self.appointment.starts_at;target=old+timedelta(minutes=40)
+        self.provider.fail_update_once=True
+        result=reschedule_appointment(self.appointment.pk,self.day,target,self.actor,provider=self.provider)
+        with patch.object(self.provider,'delete_event',side_effect=CalendarUnavailable()):
+            result=request_cancellation(result.pk,self.actor,provider=self.provider)
+        self.assertEqual(result.status,'cancel_pending');self.assertEqual(result.previous_starts_at,old)
+        choices=[start for start,end in available_slots(self.day,provider=self.provider)]
+        self.assertNotIn(old,choices);self.assertNotIn(target,choices)
+        result=request_cancellation(result.pk,self.actor,provider=self.provider)
+        self.assertEqual(result.status,'cancelled');self.assertIsNone(result.previous_starts_at)
+        choices=[start for start,end in available_slots(self.day,provider=self.provider)]
+        self.assertIn(old,choices);self.assertIn(target,choices)
+
     def test_wrong_google_account_is_not_used(self):
         from clinic.scheduling import available_slots,BookingError
         self.connection.account_email='other@example.com';self.connection.save()

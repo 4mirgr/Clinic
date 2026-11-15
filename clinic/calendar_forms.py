@@ -26,8 +26,11 @@ class ScheduleForm(forms.ModelForm):
     def clean(self):
         data = super().clean()
         opening,closing = data.get('opens_at'),data.get('closes_at')
-        if data.get('enabled') and (not data.get('weekdays') or not opening or not closing):
-            raise forms.ValidationError('برای فعال‌سازی، روزها و شروع و پایان کار را مشخص کنید.')
+        if data.get('enabled'):
+            if data.get('weekdays') and (not opening or not closing):
+                raise forms.ValidationError('برای برنامه هفتگی، شروع و پایان کار را مشخص کنید.')
+            if not data.get('weekdays') and not AvailabilityOverride.objects.filter(closed=False).exists():
+                raise forms.ValidationError('دست‌کم یک روز هفتگی یا برنامه روز خاص را مشخص کنید.')
         if opening and closing:
             if opening >= closing:
                 raise forms.ValidationError('پایان کار باید بعد از شروع کار در همان روز باشد.')
@@ -44,8 +47,13 @@ class BookingForm(forms.Form):
 
     def __init__(self,*args,**kwargs):
         self.actor = kwargs.pop('actor',None)
+        account = kwargs.pop('patient_account',None)
         super().__init__(*args,**kwargs)
         self.fields['patient'].queryset = Patient.objects.order_by('last_name','first_name')
+        if account is not None:
+            self.fields['patient'].queryset = Patient.objects.filter(pk=account.patient_id)
+            self.fields['patient'].initial = account.patient_id
+            self.fields['patient'].widget = forms.HiddenInput()
         self.fields['patient'].label_from_instance = lambda patient: patient.full_name
         if not self.is_bound and self.actor:
             self.fields['request_token'].initial = signing.dumps({'key':uuid.uuid4().hex,'user':self.actor.pk},salt='clinic.booking')

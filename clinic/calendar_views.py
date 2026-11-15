@@ -7,7 +7,8 @@ from django.shortcuts import get_object_or_404,redirect,render
 from django.views.decorators.http import require_GET,require_POST,require_http_methods
 from django.utils import timezone
 
-from .access import calendar_staff_required
+from .access import booking_access_required,calendar_staff_required,role_for
+from .portal_api import PortalError,account_for,locked_account
 from .calendar_api import CalendarUnavailable,configured
 from .calendar_forms import AvailabilityForm,BookingForm,RescheduleForm,ScheduleForm
 from .calendar_models import Appointment,AvailabilityOverride,CalendarConnection,ScheduleSettings
@@ -46,22 +47,35 @@ def schedule_settings(request):
     return render(request,'clinic/form.html',{'section':'calendar','form':form,'title':'تنظیم نوبت‌دهی','description':'روزها و ساعت‌های کاری را مشخص کنید. تا فعال‌سازی شما، رزرو خودکار انجام نمی‌شود. ساعت‌ها به وقت تهران هستند.','back_url':'calendar'})
 
 
-@calendar_staff_required
+@booking_access_required
 @require_POST
 def book(request):
-    form = BookingForm(request.POST,actor=request.user)
+    account = request.booking_account
+    form = BookingForm(request.POST,actor=request.user,patient_account=account)
     if form.is_valid():
         try:
-            appointment = book_selected_slot(form.cleaned_data['patient'],form.cleaned_data['day'],form.cleaned_data['slot_start'],request.user,request_key=form.cleaned_data['request_token'])
+            authorize = (lambda:locked_account(request,account)) if account else None
+            appointment = book_selected_slot(form.cleaned_data['patient'],form.cleaned_data['day'],form.cleaned_data['slot_start'],request.user,request_key=form.cleaned_data['request_token'],authorize=authorize)
+        except PortalError:
+            from django.contrib.auth import logout
+            logout(request)
+            return redirect('patient_portal')
         except (BookingError,CalendarUnavailable) as error:
             form.add_error(None,str(error))
         else:
             if appointment.status == 'confirmed':
                 messages.success(request,'نوبت در ساعت انتخاب‌شده در گوگل ثبت شد.')
+            elif appointment.status == 'conflict':
+                messages.warning(request,'این ساعت هنگام ثبت اشغال شد و رزرو نشد؛ ساعت دیگری انتخاب کنید.')
+            elif appointment.status in {'cancelled','conflict_cancelling'}:
+                messages.warning(request,'این درخواست قبلاً لغو شده است؛ برای رزرو تازه فرم جدید باز کنید.')
             else:
                 messages.warning(request,'زمان در پنل نگه داشته شد، اما ثبت گوگل هنوز تأیید نشده؛ وضعیت همگام‌سازی را بررسی کنید.')
-            return redirect('calendar')
-    return render(request,'clinic/form.html',{'section':'calendar','form':form,'title':'انتخاب وقت مراجعه','description':'روز شمسی و یکی از ساعت‌های آزاد را انتخاب کنید.','back_url':'calendar','slot_picker':True})
+            return redirect('patient_booking' if account else 'calendar')
+    context = {'section':'calendar','form':form,'title':'انتخاب وقت مراجعه','description':'روز شمسی و یکی از ساعت‌های آزاد را انتخاب کنید.','back_url':'patient_booking' if account else 'calendar','slot_picker':True}
+    if account:
+        context['clinic_role'] = 'patient'
+    return render(request,'clinic/form.html',context)
 
 
 @calendar_staff_required
@@ -82,7 +96,7 @@ def cancel(request,pk):
     return redirect('calendar')
 
 
-@calendar_staff_required
+@booking_access_required
 @require_GET
 def slots(request):
     from django.core.exceptions import ValidationError
@@ -90,6 +104,8 @@ def slots(request):
         day = JalaliDateField().clean(request.GET.get('day',''))
         exclude = None
         if request.GET.get('appointment'):
+            if request.booking_account:
+                return JsonResponse({'slots':[],'error':'دسترسی به ویرایش این نوبت مجاز نیست.'},status=403)
             import uuid
             try:
                 exclude = get_object_or_404(Appointment,pk=uuid.UUID(request.GET['appointment']))
@@ -101,6 +117,18 @@ def slots(request):
     except (BookingError,CalendarUnavailable) as error:
         return JsonResponse({'slots':[],'error':str(error)},status=503)
     return JsonResponse({'slots':[{'start':start.isoformat(),'end':end.isoformat(),'label':timezone.localtime(start).strftime('%H:%M').translate(TO_PERSIAN)} for start,end in choices]})
+
+
+@booking_access_required
+@require_GET
+def patient_booking(request):
+    if request.booking_account is None:
+        return redirect('calendar')
+    account = request.booking_account
+    records = Appointment.objects.filter(patient_id=account.patient_id).order_by('-starts_at') if account.patient_id else Appointment.objects.none()
+    page = Paginator(records,20).get_page(request.GET.get('page'))
+    form = BookingForm(actor=request.user,patient_account=account) if account.patient_id else None
+    return render(request,'clinic/patient_booking.html',{'section':'calendar','clinic_role':'patient','form':form,'page':page})
 
 
 @calendar_staff_required

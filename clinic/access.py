@@ -34,3 +34,23 @@ def calendar_staff_required(view):
             raise PermissionDenied
         return view(request,*args,**kwargs)
     return wrapped
+
+
+def booking_access_required(view):
+    @wraps(view)
+    def wrapped(request,*args,**kwargs):
+        request.booking_account = None
+        if role_for(request.user) in ('manager','secretary'):
+            return view(request,*args,**kwargs)
+        from .portal_api import PortalError,account_for
+        try:
+            request.booking_account = account_for(request,required=True)
+        except PortalError as error:
+            if error.status == 401:
+                if request.headers.get('Accept') == 'application/json':
+                    from django.http import JsonResponse
+                    return JsonResponse({'slots':[],'error':'ابتدا وارد حساب بیمار شوید.'},status=401)
+                return redirect('patient_portal')
+            raise PermissionDenied
+        return view(request,*args,**kwargs)
+    return wrapped

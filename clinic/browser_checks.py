@@ -201,3 +201,42 @@ class JalaliBookingAcceptance(LiveServerTestCase):
                 (settings.BASE_DIR/'test-results').mkdir(exist_ok=True)
                 page.screenshot(path=str(settings.BASE_DIR/'test-results/calendar-jalali-edit.png'),full_page=True)
                 browser.close()
+
+
+class PatientSlotAcceptance(LiveServerTestCase):
+    def test_shared_patient_account_selects_own_jalali_slot(self):
+        from datetime import time,timedelta
+        from unittest.mock import patch
+        from clinic.tests.test_calendar import TEST_GOOGLE
+        from clinic.tests.test_rescheduling import EditableCalendar
+        from clinic.calendar_models import CalendarConnection,ScheduleSettings
+        from clinic.jalali import today_tehran,format_jalali
+        with override_settings(**TEST_GOOGLE):
+            doctor=User.objects.create_user('patient-slot-owner')
+            connection=CalendarConnection(pk=1,owner=doctor,active=True,account_email='dr.gerami.md@gmail.com',google_subject='test-subject');connection.set_refresh_token('fake-only');connection.save()
+            ScheduleSettings.objects.create(pk=1,enabled=True,weekdays=list(range(7)),opens_at=time(9),closes_at=time(11),slot_minutes=20,horizon_days=30)
+            provider=EditableCalendar()
+            with patch('clinic.scheduling.GoogleCalendar',return_value=provider),sync_playwright() as p:
+                browser=p.chromium.launch(executable_path=(os.getenv('CHROMIUM_PATH') or shutil.which('chromium') or p.chromium.executable_path),headless=True,args=['--no-sandbox'])
+                context=browser.new_context(viewport={'width':390,'height':844},locale='fa-IR')
+                base=self.live_server_url
+                def post(route,data):
+                    token=context.request.get(base+'/dash/api/portal/session').json()['csrf_token']
+                    return context.request.post(base+'/dash/api/portal/'+route,data=data,headers={'X-CSRFToken':token,'Content-Type':'application/json'})
+                self.assertEqual(post('signup',{'username':'patient-browser','email':'patient-browser@example.test','display_name':'بیمار آزمایشی','password':'Browser-test-only-73!'}).status,201)
+                self.assertEqual(post('profile',{'display_name':'بیمار آزمایشی','first_name':'بیمار','last_name':'آزمایشی','phone':'09123456789'}).status,200)
+                page=context.new_page();page.goto(base+'/dash/portal/')
+                page.get_by_role('link',name='انتخاب وقت و نوبت‌های من').click()
+                page.wait_for_load_state('load')
+                page.wait_for_url('**/dash/booking/')
+                self.assertEqual(page.get_by_label('تاریخ مراجعه (هجری شمسی)').input_value(),format_jalali(today_tehran()))
+                page.get_by_role('button',name='باز کردن تقویم شمسی').click();self.assertTrue(page.locator('.jalali-popup').is_visible());page.keyboard.press('Escape')
+                page.get_by_label('تاریخ مراجعه (هجری شمسی)').fill(format_jalali(today_tehran()+timedelta(days=1)))
+                page.get_by_role('button',name='نمایش ساعت‌های آزاد').click()
+                page.locator('.slot-choice').first.wait_for();page.locator('.slot-choice').first.click();page.get_by_role('button',name='ثبت وقت انتخاب‌شده').click()
+                page.wait_for_url('**/dash/booking/')
+                self.assertIn('ثبت‌شده در گوگل',page.locator('main').inner_text());self.assertEqual(len(provider.events),1)
+                self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),390)
+                (settings.BASE_DIR/'test-results').mkdir(exist_ok=True);page.screenshot(path=str(settings.BASE_DIR/'test-results/patient-jalali-booking.png'),full_page=True)
+                self.assertEqual(page.goto(base+'/dash/calendar/settings/').status,403)
+                browser.close()

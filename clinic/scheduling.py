@@ -71,14 +71,18 @@ def available_slots(day,provider=None,exclude=None,schedule=None):
     return result
 
 
-def _reserve(patient,day,actor,selected=None,provider=None,request_key=None):
+def _reserve(patient,day,actor,selected=None,provider=None,request_key=None,authorize=None):
     ScheduleSettings.objects.get_or_create(pk=1)
     with transaction.atomic():
         schedule = ScheduleSettings.objects.select_for_update().get(pk=1)
+        if authorize:
+            current = authorize()
+            if current.patient_id != patient.pk:
+                raise BookingError('پروفایل بیمار تغییر کرده؛ صفحه را تازه کنید.')
         if request_key:
             existing = Appointment.objects.filter(request_key=request_key).first()
             if existing:
-                if existing.patient_id != patient.pk or existing.created_by_id != actor.pk or timezone.localdate(existing.starts_at,TZ) != day:
+                if existing.patient_id != patient.pk or existing.created_by_id != actor.pk or timezone.localdate(existing.starts_at,TZ) != day or (selected is not None and existing.starts_at != selected):
                     raise BookingError('این فرم برای نوبت دیگری استفاده شده؛ صفحه را تازه کنید.')
                 return existing
         connection = active_connection()
@@ -98,8 +102,8 @@ def book_next_available(patient,day,actor,provider=None):
     return _reserve(patient,day,actor,provider=provider)
 
 
-def book_selected_slot(patient,day,selected,actor,provider=None,request_key=None):
-    return _reserve(patient,day,actor,selected=selected,provider=provider,request_key=request_key)
+def book_selected_slot(patient,day,selected,actor,provider=None,request_key=None,authorize=None):
+    return _reserve(patient,day,actor,selected=selected,provider=provider,request_key=request_key,authorize=authorize)
 
 
 def reschedule_appointment(pk,day,selected,actor,provider=None):

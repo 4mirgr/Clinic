@@ -4,7 +4,7 @@
 
 **Goal:** Tehran-based Jalali popup with today default, configurable free dates/hours, explicit slot selection for staff/patients, and durable updates of existing Google events for dr.gerami.md@gmail.com.
 **Architecture:** Keep Gregorian UTC database timestamps and Google ISO timestamps; convert only presentation/input. Backend jdatetime + locally vendored Jalaali JS. Weekly schedule plus dated overrides. Manager/secretary scheduling gate separate from clinical permissions. Patient identity uses the concurrently added canonical PortalAccount and its existing profile linkage; never claim an existing patient by guessed national ID. Existing Google event IDs remain stable across edits; retain old/new reservations until remote acknowledgment.
-**Spec:** User's latest request and PROJECT_HANDOFF.md; latest secretary scheduling authorization overrides older blanket calendar denial. No public self-enrollment without identity verification.
+**Spec:** User's latest request and PROJECT_HANDOFF.md; latest secretary scheduling authorization overrides older blanket calendar denial. Canonical authenticated signup may create a new patient profile; it must never claim an existing medical record using self-reported identifiers.
 
 ## Review focus
 - Jalali leap/month boundaries, Tehran day differing from UTC/browser timezone, default today.
@@ -29,7 +29,7 @@ Files: calendar_api.py, calendar_oauth.py, scheduling.py, calendar_models.py, ca
 
 ## Stage C — patient slot selection
 Files: existing PortalAccount integration, patient calendar template and scoped endpoints.
-- [ ] Write failing ownership and enrollment tests. Implement patient portal limited to own appointments/booking and shared free-slot aggregate.
-- [ ] Reuse shared portal login/profile and account revocation checks; no duplicate identities or insecure claim-by-national-ID path.
-- [ ] Full SQLite/PostgreSQL, browser, dependency/build checks; independent read-only review and regression fixes.
-- [ ] Final docs and GitHub verification; real Google account/hosting still require external setup/consent.
+- [x] Write failing ownership and enrollment tests. Implement patient portal limited to own appointments/booking and shared free-slot aggregate.
+- [x] Reuse shared portal login/profile and account revocation checks; no duplicate identities or insecure claim-by-national-ID path.
+- [x] Full SQLite/PostgreSQL, browser, dependency/build checks; independent read-only review and regression fixes.
+- [x] Final docs and GitHub verification; real Google account/hosting still require external setup/consent.
