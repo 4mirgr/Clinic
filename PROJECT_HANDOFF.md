@@ -153,3 +153,5 @@ CHROMIUM_PATH=/usr/bin/chromium .venv/bin/python manage.py test clinic.browser_c
 محدودیت فعال‌سازی پابرجاست: میزبان دائمی Python/Docker، PostgreSQL و فضای خصوصی پایدار متصل نشده‌اند. هیچ انتشار دامنه/تغییر DNS/پلن پولی/داده واقعی/ایمیل یا رویداد Google در این مرحله انجام نشده است. انتشار وابستهٔ وب‌سایت نباید پیش از تأیید واقعی این اتصال و مسیرهای خصوصی انجام شود.
 
 CI این مرحله: workflow `Clinic verification` روی PR/main اضافه شد تا مجموعه کامل را روی SQLite و PostgreSQL 17 موقت و سپس آزمون‌های Chromium و Node اجرا کند. رمز PostgreSQL داخل workflow فقط fixture موقت CI است، هیچ secret واقعی یا دیتابیس تولیدی به آن وصل نیست. نتیجهٔ اجرای راه دور پیش از تحویل نهایی بررسی می‌شود؛ تعریف workflow به‌تنهایی اثبات پاس PostgreSQL نیست.
+
+اصلاح CI: اجرای نخست پیش از ساخت job به دلیل استفاده از context غیرمجاز `runner.temp` در env سطح job رد شد؛ پیام دقیق GitHub خطوط ۲۸/۲۹ بود. مسیرهای موقت اکنون در step از RUNNER_TEMP وارد GITHUB_ENV می‌شوند. این خطای تعریف workflow بود، نه پاس/شکست آزمون PostgreSQL.

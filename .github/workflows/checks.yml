@@ -25,8 +25,6 @@ jobs:
     env:
       CLINIC_ENV: development
       DJANGO_SECRET_KEY: isolated-ci-test-key-not-a-production-secret-8543189265074138
-      CLINIC_DATA_DIR: ${{ runner.temp }}/clinic-data
-      CLINIC_STATIC_ROOT: ${{ runner.temp }}/clinic-static
       DATABASE_URL: postgres://clinic_test:isolated_ci_password@127.0.0.1:5432/clinic_test?sslmode=disable
       GOOGLE_CLIENT_ID: ''
       GOOGLE_CLIENT_SECRET: ''
@@ -41,6 +39,10 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Isolated runtime paths
+        run: |
+          echo "CLINIC_DATA_DIR=$RUNNER_TEMP/clinic-data" >> "$GITHUB_ENV"
+          echo "CLINIC_STATIC_ROOT=$RUNNER_TEMP/clinic-static" >> "$GITHUB_ENV"
       - run: python -m pip install -r requirements-dev.txt
       - run: python -m playwright install --with-deps chromium
       - name: Locked requirements and migration drift
