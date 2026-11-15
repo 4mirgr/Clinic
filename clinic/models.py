@@ -93,3 +93,5 @@ class AuditEvent(models.Model):
 
 # Register related calendar models without bloating the clinical model module.
 from .calendar_models import Appointment, CalendarConnection, ScheduleSettings  # noqa: E402,F401
+
+from .portal_models import PortalAccount, SiteActivity, PortalRecoveryRequest  # noqa: E402,F401
