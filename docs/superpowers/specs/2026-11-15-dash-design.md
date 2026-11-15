@@ -1,0 +1,13 @@
+# Clinic /dash — first usable increment
+
+User authorizes implementation and asks to proceed autonomously. Use the existing isolated checkout; no worktree. Brand: دکتر امیرهوشنگ گرامی — متخصص داخلی. Canonical production address: https://drgerami-md.ir/dash/; /dash redirects there. Existing root website must remain unaffected.
+
+Build a real server-rendered Persian RTL application, not a mock login. Django sessions/CSRF/password hashing; separate manager and secretary login portals, permissions enforced on every protected request. Only manager (explicit clinic_manager group or superuser) sees clinical information. Secretary has a restricted landing page, zero clinical permissions until user defines them. Unassigned staff and inactive users have no access. No public administrator registration or default password.
+
+Doctor increment: dashboard of actual records, create/search patients, patient detail, append visit notes, upload and download private PDF/JPG/PNG documents, search/create/edit educational advice and print/save via browser PDF with site QR. Do not invent patient data or publish unreviewed medical advice. Explicitly defer patient portal, messenger integrations, DICOM viewer, individualized advice version history, appointment calendar, and granular secretary permission editor.
+
+Architecture decision by implementer: Django 5.2 LTS with PostgreSQL production support and SQLite local development. Existing Cloudflare/Supabase projects remain untouched. This stack requires a Python/container host; it is not deployable as a static Cloudflare Pages site. Supabase may supply the PostgreSQL database through a TLS connection; its Auth/Storage are not integrated in this increment. This is a practical first increment, not the final platform architecture.
+
+Safeguards: expiring HttpOnly sessions scoped to /dash/, Secure cookies and HTTPS redirects in production, CSRF on mutations including login/logout, database-persisted login throttling, private/no-store responses, attachment-only authorized downloads, randomized storage keys and upload validation/size limits. Audit record identifiers/actions without copying patient content. No public media directory. Secrets/data excluded from git. Production must require real credentials, durable data volumes, tested backup/recovery and hosting configuration. Live hosting and branding template are not yet accessible; cannot claim deployment or visual fidelity.
+
+Visual default while template unavailable: light quiet workspace, blue/cyan accent inspired by supplied logos, responsive sidebar, clear Persian typography and simple forms. Original logo files are visible in conversation but are not locally available; do not fabricate replacements or claim they are installed.

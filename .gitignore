@@ -1,0 +1,12 @@
+.venv/
+.data/
+.local-secret
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+staticfiles/
+.superpowers/
+*.sqlite3
+test-results/

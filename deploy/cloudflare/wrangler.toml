@@ -1,0 +1,19 @@
+name = "gerami-dash-proxy"
+main = "worker.mjs"
+compatibility_date = "2026-11-15"
+workers_dev = false
+preview_urls = false
+
+# Enable ONLY after the origin is configured and tested. These two routes
+# preserve the existing website and do not capture /dashboard or /.
+# routes = [
+#   { pattern = "drgerami-md.ir/dash", zone_name = "drgerami-md.ir" },
+#   { pattern = "drgerami-md.ir/dash/*", zone_name = "drgerami-md.ir" }
+# ]
+
+# Set ORIGIN_URL to the HTTPS URL of your Python/container service.
+# Store CLINIC_PROXY_KEY as a Worker secret AND as an origin hosting secret.
+# Never put the key in this file. Do not enable request-body logging.
+
+[observability]
+enabled = false

@@ -1,0 +1,11 @@
+.git
+.venv
+.data
+.local-secret
+.env
+.env.*
+__pycache__
+*.pyc
+staticfiles
+.superpowers
+test-results
