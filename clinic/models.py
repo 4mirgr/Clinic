@@ -89,3 +89,7 @@ class AuditEvent(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+# Register related calendar models without bloating the clinical model module.
+from .calendar_models import Appointment, CalendarConnection, ScheduleSettings  # noqa: E402,F401

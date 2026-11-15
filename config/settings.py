@@ -89,3 +89,7 @@ if os.getenv('TRUST_HTTPS_PROXY') == '1':
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CLINIC_NAME = 'دکتر امیرهوشنگ گرامی'
 CLINIC_SITE = 'https://drgerami-md.ir'
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID','')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET','')
+GOOGLE_TOKEN_ENCRYPTION_KEY = os.getenv('GOOGLE_TOKEN_ENCRYPTION_KEY','')
+GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI','https://drgerami-md.ir/dash/calendar/oauth/callback/')

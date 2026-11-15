@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from clinic import views, views_auth, views_preferences
+from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth
 
 urlpatterns = [
     path('dash', RedirectView.as_view(url='/dash/', permanent=False)),
@@ -10,6 +10,14 @@ urlpatterns = [
     path('dash/login/secretary/', views_auth.portal_login, {'role':'secretary'}, name='secretary_login'),
     path('dash/logout/', views_auth.sign_out, name='logout'),
     path('dash/preferences/theme/', views_preferences.set_theme, name='set_theme'),
+    path('dash/calendar/',calendar_views.calendar_home,name='calendar'),
+    path('dash/calendar/settings/',calendar_views.schedule_settings,name='calendar_settings'),
+    path('dash/calendar/book/',calendar_views.book,name='calendar_book'),
+    path('dash/calendar/connect/',calendar_oauth.connect,name='calendar_connect'),
+    path('dash/calendar/disconnect/',calendar_oauth.disconnect,name='calendar_disconnect'),
+    path('dash/calendar/oauth/callback/',calendar_oauth.callback,name='calendar_callback'),
+    path('dash/calendar/<uuid:pk>/retry/',calendar_views.retry,name='calendar_retry'),
+    path('dash/calendar/<uuid:pk>/cancel/',calendar_views.cancel,name='calendar_cancel'),
     path('dash/patients/', views.patients, name='patients'),
     path('dash/patients/new/', views.patient_new, name='patient_new'),
     path('dash/patients/<uuid:pk>/', views.patient_detail, name='patient_detail'),

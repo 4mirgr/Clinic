@@ -12,7 +12,7 @@
 - Do not change current core layout or claim inaccessible template fidelity. Generate original artwork; do not fabricate the original logo.
 - Print always uses a light paper background. No patient data in cookies/localStorage/artwork.
 - Clinic timezone Asia/Tehran. Workdays/hours are owner-configured, not guessed; default booking disabled.
-- Google connection is for Calendar, not replacement of the application's login. Use a dedicated app-created calendar and primary calendar free/busy. Never send name/national ID/clinical notes to Google by default.
+- Google connection is for Calendar, not replacement of the application's login. Use the owner’s primary calendar and its free/busy. Never send name/national ID/clinical notes to Google by default.
 - External credentials/network are not present. Finish independent code/tests/docs; report live consent/setup as remaining requirements, not a working live account.
 
 ## Review focus
@@ -31,14 +31,18 @@ Interface: UserPreference(user, theme), POST /dash/preferences/theme/ with theme
 - [x] Update handoff with results and commit/push stage.
 
 ## Stage 3: calendar + appointments
-Files: clinic/calendar_models.py (registered by models.py), calendar_service.py, calendar_views.py, calendar_forms.py; templates/clinic/calendar*.html; tests/test_calendar.py; management command sync_calendar; migration.
+Files: clinic/calendar_models.py (registered by models.py), calendar_api.py, calendar_oauth.py, scheduling.py, calendar_views.py, calendar_forms.py; templates/clinic/calendar*.html; tests/test_calendar.py; management command sync_calendar; migration.
 Interfaces: singleton CalendarConnection and ScheduleSettings; Appointment(UUID, patient, start/end, status, remote event ID); provider service free_busy/ensure_event/remove_event; request-bound OAuth start/callback; slot selection and booking service under database lock.
-- [ ] Write failing tests for missing config and role boundaries; OAuth one-time state/expiry/manager binding; encrypted token persistence; availability and local/provider conflicts; retry idempotency, failures and cancellation.
-- [ ] Implement official OAuth flow with PKCE and explicit offline consent, dedicated calendar creation, secret isolation and manager-only connection/settings/appointments pages.
-- [ ] Implement owner-configured schedule, automatic next slot within requested date, synchronization outbox and safe retries. Provide a manual retry command for periodic hosting scheduler.
-- [ ] Add Google setup guide and required environment variable names; never store actual secrets in Git.
-- [ ] Run whole suite, browser tests, Postgres tests and build/checks as applicable. Independent whole-change review; fix important findings with regression tests. Update handoff and commit/push.
+- [x] Write failing tests for missing config and role boundaries; OAuth one-time state/expiry/manager binding; encrypted token persistence; availability and local/provider conflicts; retry idempotency, failures and cancellation.
+- [x] Implement official OAuth flow with PKCE and explicit offline consent, the owner’s primary calendar, secret isolation and manager-only connection/settings/appointments pages.
+- [x] Implement owner-configured schedule, automatic next slot within requested date, synchronization outbox and safe retries. Provide a manual retry command for periodic hosting scheduler.
+- [x] Add Google setup guide and required environment variable names; never store actual secrets in Git.
+- [x] Run whole suite, browser tests, Postgres tests and build/checks as applicable. Independent whole-change review; fix important findings with regression tests. Update handoff and commit/push.
 
 ## Stage 4: final record
 - [ ] Verify remote HEAD, clean worktree, no secret/data tracked. Update validation evidence and environment startup instructions if needed.
 - [ ] Report implemented features versus untested live OAuth/hosting and outstanding office-hour inputs.
+
+Implementation ruling: Use the consenting owner’s primary calendar (calendar.events.owned + calendar.freebusy) rather than creating a secondary calendar. This matches the requested personal schedule and avoids extra calendar-creation side effects; app operations still touch only deterministic app event IDs. New OAuth consent rotates connection generation so old pending writes never migrate silently to a different Google account.
+
+Stage 3 outcome: 47 Django tests on SQLite/PostgreSQL, 2 real Chromium checks and 3 Node Worker checks passed. Independent review findings corrected with regressions. cryptography pinned at 50.0.2 after audit. Live Google setup/consent, office hours, deployment and production scheduler remain external prerequisites; see PROJECT_HANDOFF.md.

@@ -29,3 +29,8 @@ class ThemeTests(TestCase):
         self.assertEqual(self.client.get('/dash/preferences/theme/').status_code,405)
         response=self.client.post('/dash/preferences/theme/',{'theme':'dark','next':'//evil.example/'})
         self.assertRedirects(response,'/dash/',fetch_redirect_response=False)
+
+    def test_outside_dash_error_page_does_not_set_or_replace_clinic_csrf_cookie(self):
+        response=Client().get('/favicon.ico')
+        self.assertEqual(response.status_code,404)
+        self.assertNotIn('gerami_csrf',response.cookies)

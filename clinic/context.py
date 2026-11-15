@@ -12,4 +12,5 @@ def clinic_context(request):
         theme = ''
     return {'clinic_name': settings.CLINIC_NAME, 'clinic_title': 'متخصص داخلی',
             'clinic_site': settings.CLINIC_SITE, 'clinic_role': role_for(request.user),
-            'interface_theme': theme}
+            'interface_theme': theme,
+            'inside_clinic':request.path == '/dash' or request.path.startswith('/dash/')}

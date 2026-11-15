@@ -14,6 +14,9 @@ class PrivateResponsesMiddleware:
         else:
             response = self.get_response(request)
         if request.path.startswith('/dash'):
+            # Chromium enforces form-action across POST redirects. Only these OAuth
+            # initiation documents may navigate a submitted form to Google's consent origin.
+            form_action = "'self' https://accounts.google.com" if request.path in ('/dash/calendar/','/dash/calendar/connect/') else "'self'"
             response['Cache-Control'] = 'private, no-store, max-age=0'
             response['Pragma'] = 'no-cache'
             # Chromium sends Origin:null on form POSTs under no-referrer.
@@ -23,6 +26,6 @@ class PrivateResponsesMiddleware:
             response['Content-Security-Policy'] = (
                 "default-src 'self'; script-src 'self'; style-src 'self'; "
                 "img-src 'self' data:; font-src 'self'; connect-src 'self'; "
-                "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+                f"object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action {form_action}"
             )
         return response

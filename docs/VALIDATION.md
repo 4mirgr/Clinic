@@ -2,6 +2,18 @@
 
 This is an initial development increment, not a live deployment or approval for real patient data.
 
+## Latest increment: persistent themes, GPT artwork and Calendar (2026-11-15)
+
+- Living handoff `PROJECT_HANDOFF.md` and `AGENTS.md` added; baseline and theme stage committed/pushed to GitHub main. Calendar stage is committed with its updated handoff; remote verification is recorded there.
+- Final Django suite: 47/47 on SQLite and 47/47 on temporary PostgreSQL 17. Browser: 2/2; Node proxy: 3/3.
+- Browser checks actual CSS/fonts, theme persistence/reload, desktop and 390px mobile, light print while dark mode is active, office-hours form, secretary denial, and configured OAuth authorization navigation. The OAuth browser uses a closed local proxy for external hosts; it verifies CSP/navigation, not real Google consent.
+- Official Google OAuth Flow token exchange is doubled at the network boundary in unit tests. Calendar API responses are controlled fixtures. No real account, access/refresh token or patient appointment was used.
+- Independent review's three important findings fixed with regressions: Google navigation blocked by form-action policy; conflict cancellation violating a reused slot's uniqueness; inaccessible nearest appointments after 60 entries.
+- Additional direct-login CSRF regression fixed: an out-of-prefix favicon error page must not issue a new clinic CSRF cookie. Explicit favicon and prefix-limited theme form remove the interference.
+- cryptography upgraded from 47.0.0 to 50.0.2 after vulnerability audit findings. Re-audit: no known vulnerabilities in pinned runtime requirements.
+- Docker rebuilt with new dependencies; native migrations/system checks pass. Existing intentional HSTS warnings and production/live-account limitations remain.
+- Original GPT-generated artwork is committed under static/clinic/art with provenance; it is decorative, not the owner's original logo. Theme cookie holds only a preference; account theme is persisted server-side.
+
 ## Verified on the final source
 
 - Django suite: 26/26 passed on local SQLite.
