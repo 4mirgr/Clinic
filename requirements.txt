@@ -22,3 +22,4 @@ idna==3.20
 urllib3==2.8.0
 pyasn1==0.6.5
 pyasn1-modules==0.4.2
+Pillow==13.0.0
