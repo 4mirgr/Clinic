@@ -119,7 +119,7 @@ class PortalTests(TestCase):
         self.post('activity', event); self.post('activity', event)
         self.assertEqual(Activity.objects.count(), 1)
         self.assertEqual(Activity.objects.get().count, 2)
-        for value in ['09123456789', 'person@example.test', 'https://example.test/secret']:
+        for value in ['09123456789', 'person@example.test', 'https://example.test/secret', '0912 345 6789', '۰۹۱۲-۳۴۵-۶۷۸۹', '123-45-6789', 'example.com/private-record']:
             self.post('activity', {**event, 'value':value})
         self.assertEqual(Activity.objects.count(), 1)
         self.assertEqual(self.client.get(API + 'activity').json()['events'][0]['value'], 'فشار خون')
@@ -221,3 +221,20 @@ class PortalTests(TestCase):
         Activity.objects.create(account=account, kind='search', value='recent', day=timezone.localdate())
         call_command('purge_portal_activity', stdout=StringIO())
         self.assertEqual(list(Activity.objects.values_list('value', flat=True)), ['recent'])
+
+    def test_revocation_during_password_change_cannot_refresh_the_revoked_session(self):
+        from unittest.mock import patch
+        from django.db.models import F
+        from clinic import portal_api
+        self.signup()
+        token = self.csrf()
+        original = portal_api.account_for
+        def revoke_after_check(request, required=False):
+            account = original(request, required)
+            apps.get_model('clinic', 'PortalAccount').objects.filter(pk=account.pk).update(auth_version=F('auth_version')+1)
+            return account
+        with patch.object(portal_api, 'account_for', side_effect=revoke_after_check):
+            response = self.client.post(API+'password', json.dumps({'current_password':PASSWORD, 'password':'Replacement secret 883!'}), content_type='application/json', HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue(User.objects.get(username='patient-one').check_password(PASSWORD))
+        self.assertIsNone(self.client.get(API+'session').json()['user'])

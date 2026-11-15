@@ -259,8 +259,9 @@ def password_change(request):
     rate(request, 'portal-password', 8, str(account.pk))
     new_password = check_password(data.get('password'), request.user)
     with transaction.atomic():
-        user = User.objects.select_for_update(no_key=True).get(pk=request.user.pk)
-        if not constant_time_compare(request.session.get(HASH_SESSION_KEY, ''), user.get_session_auth_hash()) or not user.check_password(data.get('current_password', '')):
+        account = locked_account(request, account)
+        user = account.user
+        if not user.check_password(data.get('current_password', '')):
             raise PortalError('invalid_credentials', 401)
         user.set_password(new_password); user.save(update_fields=['password'])
         PortalAccount.objects.filter(pk=account.pk).update(auth_version=F('auth_version') + 1)
@@ -297,7 +298,9 @@ def activity(request):
         value = unicodedata.normalize('NFKC', normalize(text(data.get('value'), 160, 1)))
         category = normalize(text(data.get('category', ''), 100))
         # Do not store personal identifiers, URL fragments or contact details as search history.
-        if re.search(r'\d{6,}|@|https?://|www\.|[?#=&]', value, re.I):
+        number_like = re.sub(r'[\s()+./‐‑‒–—−-]', '', value)
+        domain_like = re.search(r'(?<!\w)(?:[\w-]+\.)+(?:[^\W\d_]{2,}|xn--[a-z0-9-]+)(?=[/:\s]|$)', value, re.I)
+        if re.search(r'\d{6,}', number_like) or domain_like or re.search(r'@|https?://|www\.|[?#=&]', value, re.I):
             return {'recorded': False}
         if data['kind'] == 'article_open' and not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', value):
             raise PortalError('invalid_fields')
