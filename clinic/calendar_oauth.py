@@ -8,6 +8,8 @@ from django.shortcuts import redirect
 from django.utils import timezone
 from django.views.decorators.http import require_GET,require_POST
 from google_auth_oauthlib.flow import Flow
+from google.oauth2 import id_token
+from google.auth.transport.requests import Request
 
 from .access import manager_required
 from .calendar_api import SCOPES,TOKEN_URI,configured
@@ -29,8 +31,9 @@ def connect(request):
         messages.error(request,'اتصال گوگل تنظیم نشده؛ تنظیمات امن OAuth توسط میزبان تکمیل شود.')
         return redirect('calendar')
     flow = make_flow()
-    url,state = flow.authorization_url(access_type='offline',prompt='consent',include_granted_scopes='true')
-    request.session['google_oauth'] = {'state':state,'verifier':flow.code_verifier,'user_id':request.user.pk,'created_at':timezone.now().timestamp()}
+    nonce = secrets.token_urlsafe(32)
+    url,state = flow.authorization_url(access_type='offline',prompt='consent',include_granted_scopes='true',login_hint=settings.GOOGLE_CALENDAR_ACCOUNT,nonce=nonce)
+    request.session['google_oauth'] = {'state':state,'verifier':flow.code_verifier,'nonce':nonce,'user_id':request.user.pk,'created_at':timezone.now().timestamp()}
     return redirect(url)
 
 
@@ -56,12 +59,27 @@ def callback(request):
             granted = granted.split()
         if not credentials.refresh_token or not set(SCOPES).issubset(set(granted)):
             raise ValueError('Missing offline consent or scopes')
+        if not credentials.id_token:
+            raise ValueError('Missing account identity')
+        claims = id_token.verify_oauth2_token(credentials.id_token,Request(),audience=settings.GOOGLE_CLIENT_ID)
+        email = claims.get('email','').strip().casefold()
+        if (claims.get('email_verified') is not True or email != settings.GOOGLE_CALENDAR_ACCOUNT
+            or not claims.get('sub') or not secrets.compare_digest(claims.get('nonce',''),saved.get('nonce',''))):
+            raise ValueError('Wrong Google account or nonce')
         connection = CalendarConnection(pk=1,owner=request.user,calendar_id='primary',generation=uuid.uuid4(),active=True)
+        connection.account_email,connection.google_subject = email,claims['sub']
         connection.set_refresh_token(credentials.refresh_token)
         ScheduleSettings.objects.get_or_create(pk=1)
         with transaction.atomic():
             ScheduleSettings.objects.select_for_update().get(pk=1)
-            connection.save()
+            old = CalendarConnection.objects.filter(pk=1).first()
+            if old and old.google_subject == connection.google_subject and old.account_email == email:
+                connection.generation = old.generation
+            CalendarConnection.objects.update_or_create(pk=1,defaults={
+                'owner':request.user,'calendar_id':'primary','generation':connection.generation,
+                'active':True,'account_email':email,'google_subject':connection.google_subject,
+                'refresh_token_encrypted':connection.refresh_token_encrypted,
+            })
     except Exception:
         # Provider exceptions may contain tokens. Do not log or display their repr/body.
         messages.error(request,'اتصال گوگل کامل نشد. تنظیمات OAuth و اجازه دسترسی آفلاین را بررسی کنید.')

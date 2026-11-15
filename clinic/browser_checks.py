@@ -156,3 +156,48 @@ class OAuthNavigationAcceptance(LiveServerTestCase):
                 self.assertIn('code_challenge',parse_qs(target.query))
                 self.assertEqual(navigation.value.method,'GET')
                 browser.close()
+
+
+class JalaliBookingAcceptance(LiveServerTestCase):
+    def test_staff_selects_jalali_slot_and_edits_same_google_event(self):
+        from datetime import time,timedelta
+        from unittest.mock import patch
+        from clinic.tests.test_calendar import TEST_GOOGLE
+        from clinic.tests.test_rescheduling import EditableCalendar
+        from clinic.calendar_models import CalendarConnection,ScheduleSettings,Appointment
+        from clinic.models import Patient
+        from clinic.jalali import today_tehran,format_jalali
+        with override_settings(**TEST_GOOGLE):
+            user=User.objects.create_user('slot-doctor',password='Browser-test-only-73!');user.groups.add(Group.objects.get_or_create(name='clinic_manager')[0])
+            Patient.objects.create(first_name='تست',last_name='نوبت شمسی',phone='09123456789')
+            connection=CalendarConnection(pk=1,owner=user,active=True,account_email='dr.gerami.md@gmail.com',google_subject='test-subject');connection.set_refresh_token('test-only-refresh');connection.save()
+            ScheduleSettings.objects.create(pk=1,enabled=True,weekdays=list(range(7)),opens_at=time(9),closes_at=time(11),slot_minutes=20,horizon_days=30)
+            provider=EditableCalendar()
+            with patch('clinic.scheduling.GoogleCalendar',return_value=provider),sync_playwright() as p:
+                browser=p.chromium.launch(executable_path=(os.getenv('CHROMIUM_PATH') or shutil.which('chromium') or p.chromium.executable_path),headless=True,args=['--no-sandbox'])
+                page=browser.new_page(viewport={'width':1280,'height':1000})
+                page.goto(self.live_server_url+'/dash/login/manager/')
+                page.get_by_label('نام کاربری').fill('slot-doctor');page.get_by_label('رمز عبور').fill('Browser-test-only-73!');page.get_by_role('button',name='ورود به پنل').click()
+                page.goto(self.live_server_url+'/dash/calendar/')
+                page.get_by_label('بیمار',exact=False).select_option(index=1)
+                page.get_by_label('تاریخ مراجعه (هجری شمسی)').fill(format_jalali(today_tehran()+timedelta(days=1)))
+                page.get_by_role('button',name='نمایش ساعت‌های آزاد').click()
+                page.locator('.slot-choice').first.wait_for();page.locator('.slot-choice').first.click()
+                page.get_by_role('button',name='ثبت وقت انتخاب‌شده').click()
+                page.wait_for_url('**/dash/calendar/')
+                self.assertIn('ثبت‌شده در گوگل',page.locator('main').inner_text())
+                initial_edit_url=page.get_by_role('link',name='ویرایش وقت').get_attribute('href')
+                import uuid
+                event_id=uuid.UUID(initial_edit_url.split('/')[-3]).hex
+                page.get_by_role('link',name='ویرایش وقت').click()
+                page.get_by_role('button',name='نمایش ساعت‌های آزاد').click()
+                page.locator('.slot-choice').nth(1).wait_for();page.locator('.slot-choice').nth(1).click()
+                page.get_by_role('button',name='ذخیره و همگام‌سازی ویرایش').click()
+                page.wait_for_url('**/dash/calendar/')
+                self.assertIn('ثبت‌شده در گوگل',page.locator('main').inner_text())
+                self.assertIn('۰۹:۲۰',page.locator('main').inner_text())
+                self.assertEqual(page.get_by_role('link',name='ویرایش وقت').get_attribute('href'),initial_edit_url)
+                self.assertEqual(list(provider.events),[event_id]);self.assertEqual(provider.updates,1)
+                (settings.BASE_DIR/'test-results').mkdir(exist_ok=True)
+                page.screenshot(path=str(settings.BASE_DIR/'test-results/calendar-jalali-edit.png'),full_page=True)
+                browser.close()

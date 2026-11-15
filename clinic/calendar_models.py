@@ -14,6 +14,8 @@ class CalendarConnection(models.Model):
     generation = models.UUIDField(default=uuid.uuid4,editable=False)
     refresh_token_encrypted = models.TextField(blank=True)
     active = models.BooleanField(default=False)
+    account_email = models.EmailField(blank=True)
+    google_subject = models.CharField(max_length=255,blank=True)
     connected_at = models.DateTimeField(auto_now=True)
 
     def set_refresh_token(self,token):
@@ -47,13 +49,16 @@ class AvailabilityOverride(models.Model):
 
 
 class Appointment(models.Model):
-    STATUS = [('pending','در انتظار ثبت گوگل'),('confirmed','ثبت‌شده در گوگل'),('cancel_pending','لغو در انتظار تأیید'),('conflict_cancelling','لغو نوبت دارای تداخل، در انتظار تأیید'),('cancelled','لغوشده'),('conflict','تداخل در گوگل؛ زمان جدید لازم است'),('attention','نیازمند بررسی پزشک')]
-    RESERVING = ['pending','confirmed','cancel_pending','attention']
+    STATUS = [('pending','در انتظار ثبت گوگل'),('update_pending','ویرایش در انتظار تأیید گوگل'),('confirmed','ثبت‌شده در گوگل'),('cancel_pending','لغو در انتظار تأیید'),('conflict_cancelling','لغو نوبت دارای تداخل، در انتظار تأیید'),('cancelled','لغوشده'),('conflict','تداخل در گوگل؛ زمان جدید لازم است'),('attention','نیازمند بررسی پزشک')]
+    RESERVING = ['pending','update_pending','confirmed','cancel_pending','attention']
     id = models.UUIDField(primary_key=True,default=uuid.uuid4,editable=False)
     patient = models.ForeignKey('clinic.Patient',on_delete=models.PROTECT,related_name='appointments')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.PROTECT)
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
+    previous_starts_at = models.DateTimeField(null=True,blank=True)
+    previous_ends_at = models.DateTimeField(null=True,blank=True)
+    sync_operation = models.CharField(max_length=10,choices=[('create','ثبت'),('update','ویرایش'),('cancel','لغو')],default='create')
     status = models.CharField(max_length=20,choices=STATUS,default='pending')
     connection_generation = models.UUIDField()
     google_event_id = models.CharField(max_length=64,blank=True)
@@ -67,5 +72,5 @@ class Appointment(models.Model):
         ordering = ['-starts_at']
         constraints = [
             models.CheckConstraint(condition=models.Q(ends_at__gt=models.F('starts_at')),name='appointment_end_after_start'),
-            models.UniqueConstraint(fields=['starts_at'],condition=models.Q(status__in=['pending','confirmed','cancel_pending','attention']),name='one_reserved_appointment_start'),
+            models.UniqueConstraint(fields=['starts_at'],condition=models.Q(status__in=['pending','update_pending','confirmed','cancel_pending','attention']),name='one_reserved_appointment_start'),
         ]

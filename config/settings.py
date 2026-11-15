@@ -93,6 +93,7 @@ GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID','')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET','')
 GOOGLE_TOKEN_ENCRYPTION_KEY = os.getenv('GOOGLE_TOKEN_ENCRYPTION_KEY','')
 GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI','https://drgerami-md.ir/dash/calendar/oauth/callback/')
+GOOGLE_CALENDAR_ACCOUNT = os.getenv('GOOGLE_CALENDAR_ACCOUNT','dr.gerami.md@gmail.com').strip().casefold()
 
 CSRF_FAILURE_VIEW = 'clinic.portal_api.csrf_failure'
 PASSWORD_RESET_TIMEOUT = 900

@@ -2,9 +2,11 @@ from datetime import datetime,timedelta,time
 from zoneinfo import ZoneInfo
 
 from django.db import transaction
+from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
 
-from .calendar_api import CalendarUnavailable,GoogleCalendar,configured
+from .calendar_api import CalendarUnavailable,GoogleCalendar,configured,timestamp
 from .calendar_models import Appointment,AvailabilityOverride,CalendarConnection,ScheduleSettings
 from .models import AuditEvent
 
@@ -38,7 +40,7 @@ def working_windows(day,schedule):
 
 def active_connection():
     connection = CalendarConnection.objects.filter(pk=1,active=True).first()
-    if not connection or not configured():
+    if not connection or not configured() or connection.account_email.casefold() != settings.GOOGLE_CALENDAR_ACCOUNT or not connection.google_subject:
         raise BookingError('ابتدا حساب گوگل پزشک باید متصل شود.')
     return connection
 
@@ -52,10 +54,11 @@ def available_slots(day,provider=None,exclude=None,schedule=None):
     provider = provider or GoogleCalendar(connection)
     beginning,closing = min(w[0] for w in windows),max(w[1] for w in windows)
     busy = provider.free_busy_except(beginning,closing,exclude) if exclude else provider.free_busy(beginning,closing)
-    records = Appointment.objects.filter(status__in=Appointment.RESERVING,starts_at__lt=closing,ends_at__gt=beginning)
+    records = Appointment.objects.filter(status__in=Appointment.RESERVING).filter(Q(starts_at__lt=closing,ends_at__gt=beginning)|Q(previous_starts_at__lt=closing,previous_ends_at__gt=beginning))
     if exclude:
         records = records.exclude(pk=exclude.pk)
     busy += list(records.values_list('starts_at','ends_at'))
+    busy += list(records.exclude(previous_starts_at=None).values_list('previous_starts_at','previous_ends_at'))
     duration = timedelta(minutes=schedule.slot_minutes)
     if schedule.slot_minutes < 5:
         raise BookingError('مدت ویزیت معتبر نیست.')
@@ -99,17 +102,46 @@ def book_selected_slot(patient,day,selected,actor,provider=None,request_key=None
     return _reserve(patient,day,actor,selected=selected,provider=provider,request_key=request_key)
 
 
+def reschedule_appointment(pk,day,selected,actor,provider=None):
+    ScheduleSettings.objects.get_or_create(pk=1)
+    with transaction.atomic():
+        schedule = ScheduleSettings.objects.select_for_update().get(pk=1)
+        appointment = Appointment.objects.select_for_update().get(pk=pk)
+        if appointment.status == 'update_pending' and appointment.starts_at == selected:
+            return appointment
+        if appointment.status != 'confirmed':
+            raise BookingError('ابتدا همگام‌سازی نوبت قبلی را کامل کنید؛ سپس ویرایش کنید.')
+        connection = active_connection()
+        if appointment.connection_generation != connection.generation:
+            raise BookingError('این نوبت متعلق به اتصال قبلی گوگل است؛ پیش از ویرایش بررسی شود.')
+        provider = provider or GoogleCalendar(connection)
+        slots = available_slots(day,provider=provider,exclude=appointment,schedule=schedule)
+        choice = next((slot for slot in slots if slot[0] == selected),None)
+        if not choice:
+            raise BookingError('ساعت جدید آزاد نیست؛ روز یا ساعت دیگری انتخاب کنید.')
+        if appointment.starts_at == choice[0] and appointment.ends_at == choice[1]:
+            return appointment
+        appointment.previous_starts_at,appointment.previous_ends_at = appointment.starts_at,appointment.ends_at
+        appointment.starts_at,appointment.ends_at = choice
+        appointment.status,appointment.sync_operation = 'update_pending','update'
+        appointment.sync_attempts,appointment.last_error = 0,''
+        appointment.next_retry_at = timezone.now()
+        appointment.save()
+        AuditEvent.objects.create(actor=actor,action='appointment.edit_request',target=str(pk))
+    return sync_appointment(pk,actor,provider=provider,force=True)
+
+
 def sync_appointment(pk,actor=None,provider=None,force=False):
     ScheduleSettings.objects.get_or_create(pk=1)
     with transaction.atomic():
         ScheduleSettings.objects.select_for_update().get(pk=1)
         appointment = Appointment.objects.select_for_update().get(pk=pk)
-        if appointment.status not in ['pending','cancel_pending','conflict_cancelling','attention']:
+        if appointment.status not in ['pending','update_pending','cancel_pending','conflict_cancelling','attention']:
             return appointment
         if not force and (appointment.next_retry_at > timezone.now() or appointment.sync_attempts >= 10):
             return appointment
         connection = CalendarConnection.objects.filter(pk=1,active=True).first()
-        if not connection or not configured():
+        if not connection or not configured() or connection.account_email.casefold() != settings.GOOGLE_CALENDAR_ACCOUNT or not connection.google_subject:
             appointment.last_error = 'تقویم متصل نیست؛ این عملیات در گوگل تأیید نشده است.'
             appointment.save(update_fields=['last_error'])
             return appointment
@@ -125,12 +157,29 @@ def sync_appointment(pk,actor=None,provider=None,force=False):
         if force:
             appointment.sync_attempts = 0
         if appointment.status == 'attention':
-            appointment.status = 'pending'
+            appointment.status = {'create':'pending','update':'update_pending','cancel':'cancel_pending'}[appointment.sync_operation]
         try:
             provider = provider or GoogleCalendar(connection)
             if appointment.status in ['cancel_pending','conflict_cancelling']:
                 provider.delete_event(appointment)
                 appointment.status = 'cancelled'
+            elif appointment.sync_operation == 'update':
+                existing = provider.find_event(appointment,match_times=False)
+                if not existing:
+                    raise CalendarUnavailable('رویداد قبلی پیدا نشد؛ رویداد تازه‌ای ساخته نمی‌شود.')
+                try:
+                    matches = timestamp(existing['start']['dateTime']) == appointment.starts_at and timestamp(existing['end']['dateTime']) == appointment.ends_at
+                except (KeyError,TypeError,ValueError):
+                    raise CalendarUnavailable('زمان رویداد قبلی معتبر نیست؛ بررسی دستی لازم است.') from None
+                if matches:
+                    appointment.status = 'confirmed'
+                elif appointment.starts_at <= timezone.now():
+                    appointment.status,appointment.last_error = 'attention','زمان جدید گذشته است؛ نوبت قبلی هنوز آزاد نشده است.'
+                elif overlaps(appointment.starts_at,appointment.ends_at,provider.free_busy_except(appointment.starts_at,appointment.ends_at,appointment)):
+                    raise CalendarUnavailable('زمان جدید در گوگل پر شده؛ نوبت قبلی تا تعیین تکلیف محفوظ است.')
+                else:
+                    provider.update_event(appointment)
+                    appointment.status = 'confirmed'
             else:
                 existing = provider.find_event(appointment)
                 if existing:
@@ -148,14 +197,15 @@ def sync_appointment(pk,actor=None,provider=None,force=False):
                     appointment.google_event_id = appointment.pk.hex
             if appointment.status in ['confirmed','cancelled']:
                 appointment.last_error = ''
+                appointment.previous_starts_at = appointment.previous_ends_at = None
             AuditEvent.objects.create(actor=actor,action='appointment.'+appointment.status,target=str(appointment.pk))
         except CalendarUnavailable as error:
             appointment.sync_attempts += 1
             appointment.next_retry_at = timezone.now() + timedelta(minutes=min(2 ** appointment.sync_attempts,60))
             appointment.last_error = str(error)
-            if appointment.sync_attempts >= 10 and appointment.status == 'pending':
+            if appointment.sync_attempts >= 10 and appointment.status in ['pending','update_pending']:
                 appointment.status = 'attention'
-        appointment.save(update_fields=['status','google_event_id','sync_attempts','next_retry_at','last_error'])
+        appointment.save(update_fields=['status','google_event_id','sync_attempts','next_retry_at','last_error','previous_starts_at','previous_ends_at','sync_operation'])
         return appointment
 
 
@@ -167,6 +217,7 @@ def request_cancellation(pk,actor,provider=None):
         if appointment.status == 'cancelled':
             return appointment
         appointment.status = 'conflict_cancelling' if appointment.status in ['conflict','conflict_cancelling'] else 'cancel_pending'
-        appointment.save(update_fields=['status'])
+        appointment.sync_operation = 'cancel'
+        appointment.save(update_fields=['status','sync_operation'])
         AuditEvent.objects.create(actor=actor,action='appointment.cancel_request',target=str(pk))
     return sync_appointment(pk,actor,provider=provider,force=True)

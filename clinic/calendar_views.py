@@ -9,11 +9,11 @@ from django.utils import timezone
 
 from .access import calendar_staff_required
 from .calendar_api import CalendarUnavailable,configured
-from .calendar_forms import AvailabilityForm,BookingForm,ScheduleForm
+from .calendar_forms import AvailabilityForm,BookingForm,RescheduleForm,ScheduleForm
 from .calendar_models import Appointment,AvailabilityOverride,CalendarConnection,ScheduleSettings
 from .jalali import JalaliDateField,TO_PERSIAN,today_tehran
 from .models import AuditEvent
-from .scheduling import BookingError,available_slots,book_selected_slot,request_cancellation,sync_appointment
+from .scheduling import BookingError,available_slots,book_selected_slot,request_cancellation,reschedule_appointment,sync_appointment
 
 
 @calendar_staff_required
@@ -26,7 +26,7 @@ def calendar_home(request):
     if all_appointments:
         records = records.order_by('-starts_at')
     else:
-        records = records.filter(Q(status__in=['pending','cancel_pending','conflict_cancelling','conflict','attention'])|Q(status='confirmed',ends_at__gte=timezone.now())).order_by('starts_at')
+        records = records.filter(Q(status__in=['pending','update_pending','cancel_pending','conflict_cancelling','conflict','attention'])|Q(status='confirmed',ends_at__gte=timezone.now())).order_by('starts_at')
     page = Paginator(records,25).get_page(request.GET.get('page'))
     return render(request,'clinic/calendar.html',{'section':'calendar','schedule':schedule,'connection':connection,'google_configured':configured(),'form':BookingForm(actor=request.user),'appointments':page.object_list,'page':page,'calendar_all':all_appointments})
 
@@ -88,12 +88,35 @@ def slots(request):
     from django.core.exceptions import ValidationError
     try:
         day = JalaliDateField().clean(request.GET.get('day',''))
-        choices = available_slots(day)
+        exclude = None
+        if request.GET.get('appointment'):
+            import uuid
+            try:
+                exclude = get_object_or_404(Appointment,pk=uuid.UUID(request.GET['appointment']))
+            except ValueError:
+                return JsonResponse({'slots':[],'error':'نوبت معتبر نیست.'},status=400)
+        choices = available_slots(day,exclude=exclude)
     except ValidationError:
         return JsonResponse({'slots':[],'error':'تاریخ شمسی معتبر انتخاب کنید.'},status=400)
     except (BookingError,CalendarUnavailable) as error:
         return JsonResponse({'slots':[],'error':str(error)},status=503)
     return JsonResponse({'slots':[{'start':start.isoformat(),'end':end.isoformat(),'label':timezone.localtime(start).strftime('%H:%M').translate(TO_PERSIAN)} for start,end in choices]})
+
+
+@calendar_staff_required
+@require_http_methods(['GET','POST'])
+def edit(request,pk):
+    appointment = get_object_or_404(Appointment,pk=pk)
+    form = RescheduleForm(request.POST if request.method == 'POST' else None,initial={'day':timezone.localdate(appointment.starts_at)})
+    if request.method == 'POST' and form.is_valid():
+        try:
+            result = reschedule_appointment(pk,form.cleaned_data['day'],form.cleaned_data['slot_start'],request.user)
+        except (BookingError,CalendarUnavailable) as error:
+            form.add_error(None,str(error))
+        else:
+            messages.info(request,'وضعیت ویرایش: '+result.get_status_display())
+            return redirect('calendar')
+    return render(request,'clinic/form.html',{'section':'calendar','form':form,'title':'ویرایش وقت مراجعه','description':'همان رویداد قبلی گوگل به‌روزرسانی می‌شود؛ تا تأیید، زمان قبلی محفوظ است.','back_url':'calendar','slot_picker':True,'editing':appointment,'slot_action':request.path})
 
 
 @calendar_staff_required

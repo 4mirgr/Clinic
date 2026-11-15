@@ -22,10 +22,10 @@ Files: clinic/jalali.py, templatetags/clinic_dates.py; widgets/templates; static
 
 ## Stage B — account identity and editing Google events
 Files: calendar_api.py, calendar_oauth.py, scheduling.py, calendar_models.py, calendar_views.py/forms/templates, sync_calendar command.
-- [ ] Write failing tests for expected Google email/OIDC nonce, same-ID PATCH, uncertain update recovery, old/new holds and conflict/cancellation.
-- [ ] Request OpenID email identity and verify signed ID token/audience/issuer/nonce/email. Bind connection to dr.gerami.md@gmail.com. Legacy unverified connections require reconnect.
-- [ ] Add edit workflow for existing synced appointments, durable update intent and old-time holds; retry PATCH safely and keep clinical data out of payloads.
-- [ ] Tests, handoff update, commit/push.
+- [x] Write failing tests for expected Google email/OIDC nonce, same-ID PATCH, uncertain update recovery, old/new holds and conflict/cancellation.
+- [x] Request OpenID email identity and verify signed ID token/audience/issuer/nonce/email. Bind connection to dr.gerami.md@gmail.com. Legacy unverified connections require reconnect.
+- [x] Add edit workflow for existing synced appointments, durable update intent and old-time holds; retry PATCH safely and keep clinical data out of payloads.
+- [x] Tests, handoff update, commit/push.
 
 ## Stage C — patient slot selection
 Files: existing PortalAccount integration, patient calendar template and scoped endpoints.

@@ -53,9 +53,9 @@ class CalendarAccessTests(TestCase):
         self.client.post('/dash/calendar/connect/')
         state=self.client.session['google_oauth']['state']
         def fetch(flow,**kwargs):
-            flow.oauth2session.token={'access_token':'test-access','refresh_token':'test-refresh-must-stay-encrypted','token_type':'Bearer','expires_in':3600,'expires_at':timezone.now().timestamp()+3600,'scope':' '.join(flow.oauth2session.scope)}
+            flow.oauth2session.token={'id_token':'synthetic-id-token','access_token':'test-access','refresh_token':'test-refresh-must-stay-encrypted','token_type':'Bearer','expires_in':3600,'expires_at':timezone.now().timestamp()+3600,'scope':' '.join(flow.oauth2session.scope)}
             return flow.oauth2session.token
-        with patch('clinic.calendar_oauth.Flow.fetch_token',autospec=True,side_effect=fetch):
+        with patch('clinic.calendar_oauth.Flow.fetch_token',autospec=True,side_effect=fetch), patch('clinic.calendar_oauth.id_token.verify_oauth2_token',return_value={'email':'dr.gerami.md@gmail.com','email_verified':True,'sub':'test-subject','nonce':self.client.session['google_oauth']['nonce']}):
             self.assertEqual(self.client.get('/dash/calendar/oauth/callback/',{'state':state,'code':'test-code'}).status_code,302)
         connection=CalendarConnection.objects.get()
         self.assertTrue(connection.active)
@@ -84,7 +84,7 @@ class SchedulingTests(TestCase):
         from clinic.calendar_models import CalendarConnection,ScheduleSettings
         self.manager=User.objects.create_user('doctor')
         self.patient=apps.get_model('clinic','Patient').objects.create(first_name='بیمار',last_name='آزمایشی',phone='09123456789')
-        self.connection=CalendarConnection(pk=1,owner=self.manager,active=True)
+        self.connection=CalendarConnection(pk=1,owner=self.manager,active=True,account_email='dr.gerami.md@gmail.com',google_subject='test-subject')
         self.connection.set_refresh_token('test-refresh');self.connection.save()
         self.day=date(2030,1,7)
         self.schedule=ScheduleSettings.objects.create(pk=1,enabled=True,weekdays=[0],opens_at=time(9),closes_at=time(10),slot_minutes=20,horizon_days=30)
@@ -189,7 +189,7 @@ class GoogleTransportTests(TestCase):
         from clinic.calendar_models import Appointment,CalendarConnection
         self.user=User.objects.create_user('doctor')
         patient=apps.get_model('clinic','Patient').objects.create(first_name='PRIVATE-PATIENT',last_name='DO-NOT-SEND',phone='09123456789',history='PRIVATE-HISTORY')
-        self.connection=CalendarConnection(pk=1,owner=self.user,active=True)
+        self.connection=CalendarConnection(pk=1,owner=self.user,active=True,account_email='dr.gerami.md@gmail.com',google_subject='test-subject')
         self.connection.set_refresh_token('test-only-refresh')
         self.appointment=Appointment(patient=patient,created_by=self.user,starts_at=datetime(2030,1,7,9,tzinfo=TZ),ends_at=datetime(2030,1,7,9,20,tzinfo=TZ),connection_generation=self.connection.generation)
 
@@ -243,7 +243,7 @@ class ReviewRegressionTests(TestCase):
         self.user=User.objects.create_user('review-doctor',password='Strong-test-only-73!')
         self.user.groups.add(Group.objects.get_or_create(name='clinic_manager')[0])
         self.patient=apps.get_model('clinic','Patient').objects.create(first_name='آزمایش',last_name='نوبت',phone='09123456789')
-        self.connection=CalendarConnection(pk=1,owner=self.user,active=True)
+        self.connection=CalendarConnection(pk=1,owner=self.user,active=True,account_email='dr.gerami.md@gmail.com',google_subject='test-subject')
         self.connection.set_refresh_token('test-token');self.connection.save()
         self.client.force_login(self.user)
 
@@ -284,7 +284,7 @@ class ReviewRegressionTests(TestCase):
         state=self.client.session['google_oauth']['state']
         def fetch(flow,**kwargs):
             flow.oauth2session.token={'access_token':'test-only','refresh_token':'test-only','token_type':'Bearer','expires_at':timezone.now().timestamp()+3600,'scope':'https://www.googleapis.com/auth/calendar.freebusy'}
-        with patch('clinic.calendar_oauth.Flow.fetch_token',autospec=True,side_effect=fetch):
+        with patch('clinic.calendar_oauth.Flow.fetch_token',autospec=True,side_effect=fetch), patch('clinic.calendar_oauth.id_token.verify_oauth2_token',return_value={'email':'dr.gerami.md@gmail.com','email_verified':True,'sub':'test-subject','nonce':self.client.session['google_oauth']['nonce']}):
             self.client.get('/dash/calendar/oauth/callback/',{'state':state,'code':'test-only'})
         self.connection.refresh_from_db();self.assertFalse(self.connection.active)
 

@@ -86,3 +86,8 @@ class AvailabilityForm(forms.Form):
             raise forms.ValidationError('بازه‌های کاری نباید با هم تداخل داشته باشند.')
         data['windows'] = windows
         return data
+
+
+class RescheduleForm(forms.Form):
+    day = JalaliDateField(label='تاریخ جدید مراجعه (هجری شمسی)')
+    slot_start = forms.DateTimeField(widget=forms.HiddenInput)

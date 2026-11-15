@@ -59,7 +59,7 @@ class SlotTests(TestCase):
         from clinic.calendar_models import CalendarConnection,ScheduleSettings
         self.actor=User.objects.create_user('doctor')
         self.patient=__import__('django.apps',fromlist=['apps']).apps.get_model('clinic','Patient').objects.create(first_name='آزمایش',last_name='شمسی',phone='09123456789')
-        self.connection=CalendarConnection(pk=1,owner=self.actor,active=True);self.connection.set_refresh_token('test-only');self.connection.save()
+        self.connection=CalendarConnection(pk=1,owner=self.actor,active=True,account_email='dr.gerami.md@gmail.com',google_subject='test-subject');self.connection.set_refresh_token('test-only');self.connection.save()
         self.settings=ScheduleSettings.objects.create(pk=1,enabled=True,weekdays=[0],opens_at=__import__('datetime').time(9),closes_at=__import__('datetime').time(10),slot_minutes=20,horizon_days=30)
         self.now=datetime(2030,1,7,4,30,tzinfo=dt_timezone.utc)
         self.clock=patch('clinic.scheduling.timezone.now',return_value=self.now);self.clock.start();self.addCleanup(self.clock.stop)

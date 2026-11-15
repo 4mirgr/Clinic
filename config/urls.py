@@ -23,6 +23,7 @@ urlpatterns = [
     path('dash/calendar/oauth/callback/',calendar_oauth.callback,name='calendar_callback'),
     path('dash/calendar/<uuid:pk>/retry/',calendar_views.retry,name='calendar_retry'),
     path('dash/calendar/<uuid:pk>/cancel/',calendar_views.cancel,name='calendar_cancel'),
+    path('dash/calendar/<uuid:pk>/edit/',calendar_views.edit,name='calendar_edit'),
     path('dash/patients/', views.patients, name='patients'),
     path('dash/patients/new/', views.patient_new, name='patient_new'),
     path('dash/patients/<uuid:pk>/', views.patient_detail, name='patient_detail'),
