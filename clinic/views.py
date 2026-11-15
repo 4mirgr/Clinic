@@ -27,6 +27,9 @@ def dashboard(request):
         return redirect('login_choice')
     role = role_for(request.user)
     if role is None:
+        from .portal_api import account_for
+        if account_for(request):
+            return redirect('patient_portal')
         raise PermissionDenied
     if role == 'secretary':
         return render(request, 'clinic/secretary.html', {'section':'dashboard'})
@@ -69,12 +72,23 @@ def patient_new(request):
     return render(request,'clinic/form.html',{'section':'patients','form':form,'title':'پرونده جدید','description':'مشخصات بیمار را ثبت کنید. کد ملی در صورت نداشتن می‌تواند خالی بماند.','back_url':'patients'})
 
 
+def consented_activity(patient):
+    from datetime import timedelta
+    from django.utils import timezone
+    from .models import PortalAccount
+    account = PortalAccount.objects.filter(patient=patient, track_activity=True, share_activity=True).first()
+    if not account:
+        return []
+    from django.db.models import Sum
+    return account.site_activity.filter(day__gte=timezone.localdate()-timedelta(days=90)).values('kind','value','category').annotate(count=Sum('count')).order_by('-count')[:30]
+
+
 @manager_required
 @require_GET
 def patient_detail(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
     audit(request,'patient.view',pk)
-    return render(request,'clinic/patient_detail.html',{'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm()})
+    return render(request,'clinic/patient_detail.html',{'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm(),'portal_profile':getattr(patient,'portal_account',None),'portal_activity':consented_activity(patient)})
 
 
 @manager_required

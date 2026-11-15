@@ -4,6 +4,7 @@ Uses isolated test users/data; never credentials for the real clinic.
 Requires requirements-dev.txt and Chromium (CHROMIUM_PATH or /usr/bin/chromium).
 """
 import os
+import shutil
 from pathlib import Path
 
 from django.conf import settings
@@ -21,7 +22,7 @@ class BrowserAcceptance(LiveServerTestCase):
         output=settings.BASE_DIR/'test-results'
         output.mkdir(exist_ok=True)
         with sync_playwright() as p:
-            browser=p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,args=['--no-sandbox'])
+            browser=p.chromium.launch(executable_path=(os.getenv('CHROMIUM_PATH') or shutil.which('chromium') or p.chromium.executable_path),headless=True,args=['--no-sandbox'])
             context=browser.new_context(viewport={'width':1440,'height':1050},locale='fa-IR')
             page=context.new_page()
             errors=[]
@@ -136,7 +137,7 @@ class OAuthNavigationAcceptance(LiveServerTestCase):
             user=User.objects.create_user('oauth-browser-doctor',password='Browser-test-only-73!')
             user.groups.add(Group.objects.get_or_create(name='clinic_manager')[0])
             with sync_playwright() as p:
-                browser=p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,args=['--no-sandbox','--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=localhost;127.0.0.1'])
+                browser=p.chromium.launch(executable_path=(os.getenv('CHROMIUM_PATH') or shutil.which('chromium') or p.chromium.executable_path),headless=True,args=['--no-sandbox','--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=localhost;127.0.0.1'])
                 page=browser.new_page()
                 # This browser uses a closed loopback proxy for external hosts.
                 # We verify the attempted authorization navigation, without contacting Google.
