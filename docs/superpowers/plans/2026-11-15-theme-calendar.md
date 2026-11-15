@@ -40,8 +40,8 @@ Interfaces: singleton CalendarConnection and ScheduleSettings; Appointment(UUID,
 - [x] Run whole suite, browser tests, Postgres tests and build/checks as applicable. Independent whole-change review; fix important findings with regression tests. Update handoff and commit/push.
 
 ## Stage 4: final record
-- [ ] Verify remote HEAD, clean worktree, no secret/data tracked. Update validation evidence and environment startup instructions if needed.
-- [ ] Report implemented features versus untested live OAuth/hosting and outstanding office-hour inputs.
+- [x] Verify remote HEAD, clean worktree, no secret/data tracked. Update validation evidence and environment startup instructions if needed.
+- [x] Record implemented features versus untested live OAuth/hosting and outstanding office-hour inputs for handoff.
 
 Implementation ruling: Use the consenting owner’s primary calendar (calendar.events.owned + calendar.freebusy) rather than creating a secondary calendar. This matches the requested personal schedule and avoids extra calendar-creation side effects; app operations still touch only deterministic app event IDs. New OAuth consent rotates connection generation so old pending writes never migrate silently to a different Google account.
 
