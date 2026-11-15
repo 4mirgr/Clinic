@@ -12,6 +12,11 @@ class LoginThrottle(models.Model):
     expires = models.DateTimeField()
 
 
+class UserPreference(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    theme = models.CharField(max_length=5, choices=[('light','روز'),('dark','شب')])
+
+
 class Patient(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     first_name = models.CharField('نام', max_length=100)

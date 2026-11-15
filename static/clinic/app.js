@@ -9,3 +9,9 @@ document.querySelector('.menu-toggle')?.addEventListener('click', event => {
   button.setAttribute('aria-expanded', String(expanded));
   document.querySelector('.sidebar').classList.toggle('is-open', expanded);
 });
+document.querySelectorAll('.theme-form').forEach(form => {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  form.querySelector('[data-theme-value]').value = dark ? 'light' : 'dark';
+  form.querySelector('.theme-icon').textContent = dark ? '☀' : '☾';
+  form.querySelector('.theme-label').textContent = dark ? 'حالت روز' : 'حالت شب';
+});

@@ -25,10 +25,10 @@ Theme state across anonymous/login/mobile, no CSS load regressions, light print 
 ## Stage 2: theme + artwork
 Files: clinic/models.py, clinic/context.py, clinic/views_preferences.py, tests/test_preferences.py; shared templates, static/clinic/theme-init.js, app.js/app.css, art/.
 Interface: UserPreference(user, theme), POST /dash/preferences/theme/ with theme=light|dark and safe local next path.
-- [ ] Write failing tests for stored theme, anonymous cookie, role independence, invalid input/CSRF/redirect boundary.
-- [ ] Implement theme and migration. Generate original transparent illustration using GPT ImageGen and store optimized artifact/provenance in repo.
-- [ ] Exercise day/night/reload/mobile and light PDF in real Chromium; whole Django suite passes.
-- [ ] Update handoff with results and commit/push stage.
+- [x] Write failing tests for stored theme, anonymous cookie, role independence, invalid input/CSRF/redirect boundary.
+- [x] Implement theme and migration. Generate original transparent illustration using GPT ImageGen and store optimized artifact/provenance in repo.
+- [x] Exercise day/night/reload/mobile and light PDF in real Chromium; whole Django suite passes.
+- [x] Update handoff with results and commit/push stage.
 
 ## Stage 3: calendar + appointments
 Files: clinic/calendar_models.py (registered by models.py), calendar_service.py, calendar_views.py, calendar_forms.py; templates/clinic/calendar*.html; tests/test_calendar.py; management command sync_calendar; migration.

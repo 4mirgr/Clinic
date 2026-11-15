@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from clinic import views, views_auth
+from clinic import views, views_auth, views_preferences
 
 urlpatterns = [
     path('dash', RedirectView.as_view(url='/dash/', permanent=False)),
@@ -9,6 +9,7 @@ urlpatterns = [
     path('dash/login/manager/', views_auth.portal_login, {'role':'manager'}, name='manager_login'),
     path('dash/login/secretary/', views_auth.portal_login, {'role':'secretary'}, name='secretary_login'),
     path('dash/logout/', views_auth.sign_out, name='logout'),
+    path('dash/preferences/theme/', views_preferences.set_theme, name='set_theme'),
     path('dash/patients/', views.patients, name='patients'),
     path('dash/patients/new/', views.patient_new, name='patient_new'),
     path('dash/patients/<uuid:pk>/', views.patient_detail, name='patient_detail'),
