@@ -87,7 +87,7 @@ CHROMIUM_PATH=/usr/bin/chromium .venv/bin/python manage.py test clinic.browser_c
 
 - راهنمای زنده و دستور نگهداری آن ایجاد شد؛ کد موجود باید همراه این راهنما در اولین commit حفظ شود.
 - وضعیت remote پیش از push بررسی شد: هیچ شاخه‌ای نداشت.
-- نتیجه commit/push در پایان همین مرحله به این بخش اضافه می‌شود.
+- اولین snapshot با commit `14dba10` ثبت و به شاخه `main` در GitHub push شد؛ `git ls-remote` همان commit را روی remote تأیید کرد. شاخه محلی `work`، `origin/main` را دنبال می‌کند. برای ادامه از `git push origin HEAD:main` استفاده شود؛ force push ممنوع است.
 
 ### مرحله ۲ — تجربه روز/شب و گرافیک
 
