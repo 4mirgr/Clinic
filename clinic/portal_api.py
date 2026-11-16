@@ -25,6 +25,7 @@ from django.utils.crypto import constant_time_compare
 from django.views.csrf import csrf_failure as default_csrf_failure
 from django.views.decorators.http import require_GET
 
+from document_store.exceptions import DocumentStorageFull
 from .access import role_for
 from .forms import DocumentForm, PatientForm, normalize
 from .models import AuditEvent, Document, LoginThrottle, Patient, PortalAccount, PortalRecoveryRequest, SiteActivity
@@ -365,6 +366,8 @@ def documents(request):
             document.patient_id = current.patient_id
             document.save()
             AuditEvent.objects.create(actor=request.user, action='portal.document_upload', target=str(document.pk))
+    except DocumentStorageFull:
+        raise PortalError('document_storage_full', 507) from None
     except Exception:
         if document.file.name and document.file._committed:
             document.file.delete(save=False)
@@ -503,6 +506,15 @@ def endpoint(request, route):
             raise PortalError('method_not_allowed', 405)
         if route == 'session' and request.method == 'GET':
             return answer(session_state(request))
+        if route in {'newsletter', 'newsletter/confirm', 'newsletter/unsubscribe', 'admin/newsletter'}:
+            from newsletter import services
+            if route == 'admin/newsletter' and request.method == 'GET':
+                return answer(services.statistics(request))
+            if route == 'newsletter':
+                return answer(services.preferences(request))
+            if request.method == 'POST' and route in {'newsletter/confirm', 'newsletter/unsubscribe'}:
+                return answer((services.confirm if route.endswith('/confirm') else services.unsubscribe)(request))
+            raise PortalError('not_found', 404)
         if route == 'admin/users' or route.startswith('admin/users/'):
             return answer(directory(request, route.removeprefix('admin/users/') if route.startswith('admin/users/') else None))
         actions = {'signup': signup, 'login': sign_in, 'profile': profile, 'password': password_change, 'privacy': privacy, 'activity': activity, 'documents': documents, 'recovery': recovery, 'reset-password': reset_password}

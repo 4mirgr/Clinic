@@ -1,8 +1,10 @@
 from django.urls import path
 from django.views.generic import RedirectView
+from clinic.health import health
 from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api
 
 urlpatterns = [
+    path('healthz',health),
     path('dash/api/portal/documents/<uuid:pk>/download', portal_api.document_download),
     path('dash/api/portal/<path:route>', portal_api.endpoint),
     path('dash/portal/', portal_api.patient_home, name='patient_portal'),

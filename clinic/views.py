@@ -12,6 +12,7 @@ from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
+from document_store.exceptions import DocumentStorageFull
 from .access import manager_required, role_for
 from .forms import AdviceForm, DocumentForm, PatientForm, VisitForm, normalize
 from .models import Advice, AuditEvent, Document, Patient
@@ -127,9 +128,17 @@ def document_new(request, pk):
     if form.is_valid():
         document = form.save(commit=False)
         document.patient, document.uploaded_by = patient, request.user
-        document.save()
-        audit(request,'document.upload',document.pk)
-        return redirect(patient)
+        try:
+            with transaction.atomic():
+                document.save()
+                audit(request,'document.upload',document.pk)
+            return redirect(patient)
+        except DocumentStorageFull:
+            form.add_error('file','ظرفیت مدارک خصوصی تکمیل شده است؛ فایل‌های قبلی محفوظ‌اند و بارگذاری تازه انجام نشد.')
+        except Exception:
+            if document.file.name and document.file._committed:
+                document.file.delete(save=False)
+            raise
     return render(request,'clinic/form.html',{'section':'patients','form':form,'title':'افزودن مدرک','description':'PDF، JPG یا PNG؛ حداکثر ۲۰ مگابایت. مشاهده‌گر DICOM هنوز اضافه نشده است.','multipart':True,'back_url':'patients'})
 
 
