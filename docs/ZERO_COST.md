@@ -2,11 +2,11 @@
 
 Owner constraint: **no purchases, card, paid trial, billing activation or automatic upgrade**. Free limits may stop the service; they must not become authorization to spend. Do not create more accounts to bypass provider limits. The existing GitHub/email identities can be used for normal signup. No extra Google account is required by this design.
 
-## Current hosting checkpoint — Render card barrier
+## Current hosting checkpoint — Render and Northflank card barriers
 
 The owner's live screenshots show Render **Free / $0** selected, but creation opens **Add Card**. The owner confirmed the **Pre-Deploy Command is empty**; Free does not offer a persistent disk. No card, payment, service creation or hosted Clinic runtime has been verified. The earlier no-card Render recommendation was not validated for this account. Do not keep asking the owner to change unrelated fields or buy a card.
 
-The replacement candidate is **Northflank Sandbox**, whose current official [pricing page](https://northflank.com/pricing) explicitly states **Free**, **No card needed**, two services, two jobs, one database, and always-on/no sleeping. This is provider documentation, **not proof that the owner's signup or runtime works**. The owner was asked to sign in normally with the existing GitHub identity and select Sandbox/Free, with no service creation or billing activation yet. Stop if that account presents a mandatory card/payment gate too. See [NORTHFLANK_PREVIEW.md](NORTHFLANK_PREVIEW.md).
+The replacement candidate **Northflank Sandbox is now blocked too**: the owner's screenshot shows a Free team, connected GitHub identity and Europe West/London, but the combined-service form explicitly says **Payment method required / Creating this service requires a card**. The official [pricing page](https://northflank.com/pricing) still says **Free / No card needed**; that does not establish service eligibility for this account. Fresh official documentation did not prove that switching regions or service settings removes the gate. Stop creation; no payment or upgrade is authorized. The owner may ask support to clarify cardless eligibility, but no support message was sent and no exemption is promised. See [NORTHFLANK_PREVIEW.md](NORTHFLANK_PREVIEW.md).
 
 The public website stays on the existing Cloudflare Pages project. The same dedicated Clinic Neon PostgreSQL, database-backed private files, Django identities/roles and same-origin bridge remain the design. No Northflank database/addon, second patient authority, DNS, Google consent, actual patient data or secret has been changed. The Render blueprint below remains historical/optional; it is not an active no-card route for this owner.
 
@@ -15,7 +15,7 @@ The public website stays on the existing Cloudflare Pages project. The same dedi
 | Part | Service | Boundary |
 | --- | --- | --- |
 | Public site | Existing Cloudflare Pages | Keep its existing Git integration and independent IntMed/AUS. No R2/billing activation. |
-| Django process | Northflank Sandbox candidate | Officially Free/no card; supports existing Docker container. Owner account, free-eligible resource choices and actual Neon connectivity still need verification. No paid fallback. |
+| Django process | Undecided; Render and Northflank creation blocked on card | Preserve the existing Docker app. No verified cardless runtime yet; no paid fallback or repeated signup without stronger evidence. |
 | Canonical account/records/files | Dedicated Neon Free PostgreSQL | Official current Free limits: 100 CU-hours/project/month, 1 GB storage/project and 5 GB network transfer/month. Limits can suspend compute or reject storage growth; they do not grant permission to upgrade. The account's actual Free label/limits must be checked before setup. |
 | Optional confirmation email | Brevo Free via HTTPS | Official free plan: up to 300 emails/day after account approval, no card. Sender/domain setup is still required. SMTP ports are blocked on Render Free, so use the optional HTTPS backend. No campaigns are enabled. |
 
@@ -62,7 +62,7 @@ Retention jobs, private backup automation, MFA and scan/quarantine remain operat
 - [Codex Cloud configuration](https://developers.openai.com/codex/environments/cloud-environments)
 - [User-requested Neon setup](https://neon.com/get-started/prompt.md)
 
-Recheck actual account UI/terms at provisioning time. No provider account or free-plan status has been verified through authenticated Neon/Render access yet.
+Recheck actual account UI/terms at provisioning time. Owner screenshots show Neon Free and Northflank Free/GitHub-connected, but Northflank service creation requires a card. No authenticated provider access by the agent or hosted Clinic runtime is claimed.
 
 Additional official sources checked for the replacement candidate:
 

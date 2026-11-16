@@ -1,16 +1,18 @@
-# Northflank Sandbox preview candidate — 2026-11-16
+# Northflank Sandbox preview — service creation blocked — 2026-11-16
 
-The owner has no payment card or purchasing ability. Render displayed Add Card despite Free/$0 and an empty Pre-Deploy Command, so it is not the verified cardless path. Northflank's current official pricing explicitly advertises Sandbox **Free / No card needed**, two services, two jobs and one database, with no sleeping. Actual owner signup and deployment remain unverified. No resource, billing, database or credential was created in this preparation stage.
+The owner has no payment card or purchasing ability. Render displayed Add Card despite Free/$0 and an empty Pre-Deploy Command. The owner's later Northflank screenshot confirms a **Free** team and connected GitHub identity, but the London combined-service creation form explicitly says **Payment method required** and **Creating this service requires a card**. Both runtime candidates are therefore blocked for this owner's no-card constraint. Signup is not service eligibility. No hosted Clinic runtime, payment or database connection has been verified.
 
-## First owner action
+The official pricing page still advertises **Free / No card needed**. A fresh check of pricing, project creation, Add a card and the August/September 2026 changelog did not establish a no-card exemption for this account, or show that changing regions removes the gate. Do not advise a region change, another signup, card entry or account upgrade as an unverified fix.
 
-Use the existing GitHub identity at <https://app.northflank.com/signup>. Keep **Sandbox / Free** and confirm the dashboard opens without adding a card. Do not select Pay as you go, purchase credit, link a paid cloud account or create another identity to evade limits. If the actual account requires a card, stop and report that fact instead of assuming the marketing statement overrides it.
+## Current owner action
 
-Only runtime hosting is changing. Keep the existing Neon project/database authority, Cloudflare public site, IntMed/AUS separation and Django account/medical permissions. Do not create a Northflank database addon or migrate real patient data as part of signup.
+Stop the creation form. If the owner chooses to contact Northflank support, request clarification whether this existing Free team can create one CPU-only Docker service **without any card or billing activation**. No support message has been sent by the agent and no exemption is promised. Do not enter payment details, purchase credit, link a paid cloud account or create another identity to evade limits. Preserve the existing project; no deletion is needed.
+
+Only runtime hosting is undecided. Keep the existing Neon project/database authority, Cloudflare public site, IntMed/AUS separation and Django account/medical permissions. Do not create a Northflank database addon or migrate real patient data as part of signup.
 
 ## Prepared service configuration
 
-After the actual Free account is confirmed, configure one build-and-deploy/combined service using the existing repository:
+The configuration below is retained preparation, **not an instruction to proceed through the current card gate**. Use it only after cardless service creation is explicitly confirmed for the actual account, with a Free resource selection:
 
 | Setting | Value |
 | --- | --- |
@@ -54,7 +56,7 @@ The current code already accepts `DJANGO_ALLOWED_HOSTS`; the Render-specific hos
 - Run synthetic signup/shared session/profile/private-file/logout/revocation/CSRF/cross-patient/secretary denial smoke, persistence after restart and independent encrypted backup/restore. Clean only those synthetic records afterward.
 - Native manager setup uses the existing authorized flow with the real owner; no default/invented medical staff identity is created. Consent purge, calendar retry, newsletter sender/transport and operational scanning/MFA remain separate unfinished work.
 
-No real account, hosted database connection, migration, certificate, backup, email or patient workflow has been verified by this document. Provider documentation is setup evidence, not a production-readiness claim.
+Only owner screenshots of the Free team, connected GitHub and card gate are verified setup evidence. No hosted database connection, migration, certificate, backup, email or patient workflow has been verified. Provider documentation is not a production-readiness claim.
 
 ## Official references checked
 
@@ -62,3 +64,6 @@ No real account, hosted database connection, migration, certificate, backup, ema
 - <https://northflank.com/docs/v1/application/network/configure-ports>
 - <https://northflank.com/blog/how-to-migrate-off-of-railway>
 - <https://render.com/docs/deploys#pre-deploy-command>
+- <https://northflank.com/docs/v1/application/getting-started/create-a-project>
+- <https://northflank.com/docs/v1/application/billing/add-a-card>
+- <https://northflank.com/changelog/august-and-september-2026>
