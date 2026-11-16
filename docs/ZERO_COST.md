@@ -2,21 +2,30 @@
 
 Owner constraint: **no purchases, card, paid trial, billing activation or automatic upgrade**. Free limits may stop the service; they must not become authorization to spend. Do not create more accounts to bypass provider limits. The existing GitHub/email identities can be used for normal signup. No extra Google account is required by this design.
 
+## Current hosting checkpoint — Render card barrier
+
+The owner's live screenshots show Render **Free / $0** selected, but creation opens **Add Card**. The owner confirmed the **Pre-Deploy Command is empty**; Free does not offer a persistent disk. No card, payment, service creation or hosted Clinic runtime has been verified. The earlier no-card Render recommendation was not validated for this account. Do not keep asking the owner to change unrelated fields or buy a card.
+
+The replacement candidate is **Northflank Sandbox**, whose current official [pricing page](https://northflank.com/pricing) explicitly states **Free**, **No card needed**, two services, two jobs, one database, and always-on/no sleeping. This is provider documentation, **not proof that the owner's signup or runtime works**. The owner was asked to sign in normally with the existing GitHub identity and select Sandbox/Free, with no service creation or billing activation yet. Stop if that account presents a mandatory card/payment gate too. See [NORTHFLANK_PREVIEW.md](NORTHFLANK_PREVIEW.md).
+
+The public website stays on the existing Cloudflare Pages project. The same dedicated Clinic Neon PostgreSQL, database-backed private files, Django identities/roles and same-origin bridge remain the design. No Northflank database/addon, second patient authority, DNS, Google consent, actual patient data or secret has been changed. The Render blueprint below remains historical/optional; it is not an active no-card route for this owner.
+
 ## Selected services
 
 | Part | Service | Boundary |
 | --- | --- | --- |
 | Public site | Existing Cloudflare Pages | Keep its existing Git integration and independent IntMed/AUS. No R2/billing activation. |
-| Django process | Render Free | No persistent disk or Render Postgres. Sleeps after 15 idle minutes; a cold start takes about a minute. 750 free instance hours/workspace/month. Without a payment method, quota exhaustion suspends service/builds rather than buying overage. |
+| Django process | Northflank Sandbox candidate | Officially Free/no card; supports existing Docker container. Owner account, free-eligible resource choices and actual Neon connectivity still need verification. No paid fallback. |
 | Canonical account/records/files | Dedicated Neon Free PostgreSQL | Official current Free limits: 100 CU-hours/project/month, 1 GB storage/project and 5 GB network transfer/month. Limits can suspend compute or reject storage growth; they do not grant permission to upgrade. The account's actual Free label/limits must be checked before setup. |
 | Optional confirmation email | Brevo Free via HTTPS | Official free plan: up to 300 emails/day after account approval, no card. Sender/domain setup is still required. SMTP ports are blocked on Render Free, so use the optional HTTPS backend. No campaigns are enabled. |
 
-These are limited free services, not an availability guarantee. Render recommends its free tier for exploration/personal projects rather than production workloads. Before any real patient use, evaluate the downtime, private backup/restore and remaining operational controls from the handoff; a successful build is not deployment approval. No paid fallback is automatic.
+These are limited free services, not an availability guarantee. Before any real patient use, evaluate private backup/restore and remaining operational controls from the handoff; a successful build is not deployment approval. No paid fallback is automatic. The original Render limits/steps below describe the old candidate only; signup is currently blocked on a card for this owner.
 
 ## Current Neon selection and setup evidence
 
 - Organization supplied by owner: `org-curly-heart-56903127`.
 - Existing project: `blue-voice-09006552` ([Console](https://console.neon.tech/app/projects/blue-voice-09006552/)). A second project is not created as a substitute for failed access.
+- Owner screenshots confirmed display name `my-first-project`, **Free plan**, Frankfurt region and default branch `production`. Owner supplied database `neondb` and role `neondb_owner`. An empty `clinic_preview` database was requested within the same project; its creation and the pooled/direct URLs have not been confirmed. A storage figure alone does not prove that an existing database is empty.
 - Official `neon` CLI 9.5.0 installed. Official `neon init` was run for this exact project/org with no JavaScript scaffold; the PostgreSQL skill and project-scoped OAuth MCP config were installed. MCP starts read-only for inspection.
 - CLI login is currently blocked by the cloud environment's enforced network allowlist (`api.neon.tech` proxy CONNECT 403). Init explicitly reported **Project skipped**. No connection URL was retrieved and no `.env` or hosted schema was fabricated. No “Neon Setup Complete” claim is made.
 - Current Codex Cloud navigation from official docs: Settings → Codex Cloud → Environments → select this environment → Edit → Public internet access. Allow `api.neon.tech`, `console.neon.tech`, `oauth2.neon.tech`, `mcp.neon.tech`, save/publish, then retry browser login. A specific PostgreSQL endpoint may also need network access after its real hostname is known. If the UI differs, inspect the actual settings instead of guessing another menu.
@@ -54,3 +63,10 @@ Retention jobs, private backup automation, MFA and scan/quarantine remain operat
 - [User-requested Neon setup](https://neon.com/get-started/prompt.md)
 
 Recheck actual account UI/terms at provisioning time. No provider account or free-plan status has been verified through authenticated Neon/Render access yet.
+
+Additional official sources checked for the replacement candidate:
+
+- [Northflank Sandbox pricing and explicit no-card statement](https://northflank.com/pricing)
+- [Northflank public HTTP ports and automatically generated TLS](https://northflank.com/docs/v1/application/network/configure-ports)
+- [Northflank migration guide: compatible external databases are supported](https://northflank.com/blog/how-to-migrate-off-of-railway)
+- [Render pre-deploy commands are paid-service features](https://render.com/docs/deploys#pre-deploy-command)
