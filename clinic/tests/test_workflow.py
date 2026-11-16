@@ -2,7 +2,7 @@ import tempfile
 from django.apps import apps
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 
 
 class WorkflowTests(TestCase):
@@ -38,6 +38,31 @@ class WorkflowTests(TestCase):
         self.assertEqual(patient.first_name, 'علی')
         self.assertEqual(patient.phone, '09123456789')
         self.assertEqual(patient.national_id, '0012345678')
+
+    def test_shared_website_profile_is_recalled_for_each_clinical_visit(self):
+        reader = Client(enforce_csrf_checks=True)
+        def post(route, data):
+            import json
+            csrf=reader.get('/dash/api/portal/session').json()['csrf_token']
+            return reader.post('/dash/api/portal/'+route,json.dumps(data),content_type='application/json',HTTP_X_CSRFTOKEN=csrf)
+        self.assertEqual(post('signup',{'username':'visit-reader','email':'visit@example.test','display_name':'علی کرمی','password':'Synthetic shared visit password 937!'}).status_code,201)
+        self.assertEqual(apps.get_model('clinic','Patient').objects.count(),0)
+        self.assertEqual(post('profile',{'first_name':'علي','last_name':'كرمي','phone':'۰۹۱۲۳۴۵۶۷۸۹','reported_history':'شرح خود بیمار'}).status_code,200)
+        account=apps.get_model('clinic','PortalAccount').objects.get()
+        patient=account.patient
+        detail=patient.get_absolute_url()
+        for query in ['علی کرمی','علي كرمي','۰۹۱۲۳۴۵۶۷۸۹','+989123456789']:
+            self.assertContains(self.client.get('/dash/patients/',{'q':query}),detail)
+        # The doctor records the identifier; a patient cannot claim an old record with it.
+        patient.national_id='0012345678';patient.save(update_fields=['national_id'])
+        self.assertContains(self.client.get('/dash/patients/',{'q':'۰۰۱۲۳۴۵۶۷۸'}),detail)
+        for note in ['یادداشت ویزیت اول پزشک','یادداشت ویزیت دوم پزشک']:
+            self.assertEqual(self.client.post(detail+'visits/new/',{'note':note}).status_code,302)
+            self.assertContains(self.client.get(detail),note)
+        self.assertEqual(patient.visits.count(),2)
+        profile=reader.get('/dash/api/portal/profile').json()['profile']
+        self.assertEqual(profile['reported_history'],'شرح خود بیمار')
+        self.assertNotIn('یادداشت ویزیت',str(profile))
 
     def test_duplicate_national_id_and_invalid_identifiers_do_not_create_records(self):
         self.create_patient()

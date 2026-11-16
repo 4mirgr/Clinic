@@ -32,3 +32,5 @@ The Python host, PostgreSQL and persistent private storage are still missing. Cl
 ## Shared account appointment selection
 
 The native `/dash/booking/` reuses this PortalAccount, session and linked Patient. Profile completion is required; no national-ID/phone claim of an existing medical record is allowed. Patient inputs can only name their own linked patient. Account revocation is rechecked inside the booking transaction. Patients see only their own appointments and aggregate free times; staff lists, edit/cancel/retry, availability configuration and OAuth remain staff-only. Website admin status does not grant staff permissions. Jalali dates default to today in Tehran. Real calendar availability requires the separately configured, verified Google connection. See GOOGLE_CALENDAR.md.
+
+Educational newsletter opt-in is a separate optional consent using the same PortalAccount. See `NEWSLETTER.md`. Apply `newsletter.0001_initial` with the full `migrate` after Clinic 0008; it creates no subscribers or patients by default. Email delivery/campaign activation is not part of shared-session deployment.

@@ -28,7 +28,7 @@ else:
         SECRET_KEY = secret_file.read_text().strip()
 ALLOWED_HOSTS = [x.strip() for x in os.getenv('DJANGO_ALLOWED_HOSTS', 'drgerami-md.ir,localhost,127.0.0.1').split(',') if x.strip()]
 CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', 'https://drgerami-md.ir').split(',') if x.strip()]
-INSTALLED_APPS = ['django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'clinic']
+INSTALLED_APPS = ['django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'clinic', 'newsletter']
 MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware', 'clinic.middleware.PrivateResponsesMiddleware', 'django.contrib.sessions.middleware.SessionMiddleware', 'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware', 'django.contrib.auth.middleware.AuthenticationMiddleware', 'django.contrib.messages.middleware.MessageMiddleware', 'django.middleware.clickjacking.XFrameOptionsMiddleware']
 ROOT_URLCONF = 'config.urls'
 TEMPLATES = [{'BACKEND':'django.template.backends.django.DjangoTemplates','DIRS':[BASE_DIR/'templates'],'APP_DIRS':True,'OPTIONS':{'context_processors':['django.template.context_processors.request','django.contrib.auth.context_processors.auth','django.contrib.messages.context_processors.messages','clinic.context.clinic_context']}}]
@@ -97,3 +97,15 @@ GOOGLE_CALENDAR_ACCOUNT = os.getenv('GOOGLE_CALENDAR_ACCOUNT','dr.gerami.md@gmai
 
 CSRF_FAILURE_VIEW = 'clinic.portal_api.csrf_failure'
 PASSWORD_RESET_TIMEOUT = 900
+
+# Educational email is a separate optional consent; registration never enables it.
+NEWSLETTER_ENABLED = os.getenv('NEWSLETTER_ENABLED') == '1'
+NEWSLETTER_FROM_EMAIL = os.getenv('NEWSLETTER_FROM_EMAIL', '')
+NEWSLETTER_SITE_ORIGIN = os.getenv('NEWSLETTER_SITE_ORIGIN', 'https://drgerami-md.ir')
+EMAIL_BACKEND = os.getenv('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 15
