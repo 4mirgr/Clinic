@@ -28,6 +28,7 @@ def available():
         return False
     backend = settings.EMAIL_BACKEND
     transport = backend == 'django.core.mail.backends.smtp.EmailBackend' and bool(settings.EMAIL_HOST) and settings.EMAIL_USE_TLS
+    transport = transport or backend == 'newsletter.https_email.BrevoConfirmationBackend' and bool(settings.BREVO_API_KEY)
     local_test = not settings.PRODUCTION and backend == 'django.core.mail.backends.locmem.EmailBackend'
     return bool(settings.NEWSLETTER_ENABLED and (transport or local_test) and origin.scheme == 'https' and origin.netloc
                 and not origin.username and not origin.password and origin.path in ('', '/') and not origin.query and not origin.fragment)

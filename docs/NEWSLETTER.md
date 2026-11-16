@@ -16,9 +16,11 @@ Consent revision, request/confirmation/withdrawal timestamps and the confirmed a
 
 `python manage.py migrate --noinput` includes the new `newsletter.0001_initial` after Clinic `0008`. No production migration or data seeding occurred in this stage. Existing shared-portal hosting/PostgreSQL/private-file prerequisites still apply.
 
-Outbound confirmation is **disabled by default** (`NEWSLETTER_ENABLED=0`). When the owner selects an email provider, set the same environment's `NEWSLETTER_FROM_EMAIL`, `NEWSLETTER_SITE_ORIGIN`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER` and `EMAIL_HOST_PASSWORD` securely, verify sender/domain/TLS and only then enable it. The site origin is fixed configuration, never an untrusted request Host. Preview needs its own HTTPS website origin and isolated email sandbox, database and secrets. Do not reuse production recipients in preview. The host must be able to reach the provider.
+Outbound confirmation is **disabled by default** (`NEWSLETTER_ENABLED=0`). Set the same environment's `NEWSLETTER_FROM_EMAIL` and `NEWSLETTER_SITE_ORIGIN` securely, verify sender/domain/TLS and only then enable it. The site origin is fixed configuration, never an untrusted request Host. Preview needs its own HTTPS website origin and isolated email sandbox, database and secrets. Do not reuse production recipients in preview. The host must be able to reach the provider.
 
-SMTP uses STARTTLS and a bounded timeout. Locmem delivery is allowed only in non-production synthetic tests. Missing transport or a delivery failure does not claim that confirmation succeeded or that membership is active. Addresses, proofs, passwords and provider exception text are not logged by this module.
+The default `NEWSLETTER_TRANSPORT=smtp` uses `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, STARTTLS and a bounded timeout. Render Free blocks outbound SMTP ports; its optional free profile instead uses `NEWSLETTER_TRANSPORT=brevo` with `BREVO_API_KEY` and fixed HTTPS transactional delivery. That backend accepts exactly one recipient, rejects CC/BCC/attachments, does not follow redirects or retry ambiguous POSTs, and requires a 201 response with a message ID. Brevo approval and sender verification are not complete; no key/account was connected. See `ZERO_COST.md` for current free limits.
+
+Locmem delivery is allowed only in non-production synthetic tests. Missing transport or a delivery failure does not claim that confirmation succeeded or that membership is active. Addresses, proofs, passwords and provider exception text are not logged by this module.
 
 ## Not implemented or enabled
 

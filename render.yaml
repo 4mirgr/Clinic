@@ -1,0 +1,36 @@
+# Optional PREVIEW service only. Import explicitly after Neon access is ready.
+# No Render database, disk, cron job, card or paid plan is declared.
+services:
+  - type: web
+    name: gerami-clinic-preview
+    runtime: docker
+    plan: free
+    branch: feat/education-newsletter
+    autoDeployTrigger: 'off'
+    healthCheckPath: /healthz
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: CLINIC_ENV
+        value: production
+      - key: DJANGO_SECRET_KEY
+        # Render generateValue is 256-bit base64 (44 chars); Django requires >=50.
+        # Supply a securely generated 64+ character value through Render secrets.
+        sync: false
+      - key: CLINIC_PROXY_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: TRUST_HTTPS_PROXY
+        value: '1'
+      - key: CLINIC_DOCUMENT_STORAGE
+        value: database
+      - key: CLINIC_DOCUMENT_BUDGET_MB
+        value: '128'
+      - key: NEWSLETTER_ENABLED
+        value: '0'
+      - key: NEWSLETTER_TRANSPORT
+        value: brevo

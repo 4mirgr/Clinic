@@ -1,11 +1,15 @@
 import os
 import secrets
+import sys
+import re
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+from .local_database import load_local_database
+load_local_database(BASE_DIR, sys.argv)
 PRODUCTION = os.getenv('CLINIC_ENV') == 'production'
 CLINIC_PROXY_KEY = os.getenv('CLINIC_PROXY_KEY', '')
 if CLINIC_PROXY_KEY and len(CLINIC_PROXY_KEY) < 32:
@@ -27,8 +31,11 @@ else:
                 f.write(secrets.token_urlsafe(64))
         SECRET_KEY = secret_file.read_text().strip()
 ALLOWED_HOSTS = [x.strip() for x in os.getenv('DJANGO_ALLOWED_HOSTS', 'drgerami-md.ir,localhost,127.0.0.1').split(',') if x.strip()]
+render_host = os.getenv('RENDER_EXTERNAL_HOSTNAME','')
+if re.fullmatch(r'[a-z0-9][a-z0-9-]*\.onrender\.com',render_host) and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
 CSRF_TRUSTED_ORIGINS = [x.strip() for x in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', 'https://drgerami-md.ir').split(',') if x.strip()]
-INSTALLED_APPS = ['django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'clinic', 'newsletter']
+INSTALLED_APPS = ['django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'clinic', 'newsletter', 'document_store']
 MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware', 'clinic.middleware.PrivateResponsesMiddleware', 'django.contrib.sessions.middleware.SessionMiddleware', 'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware', 'django.contrib.auth.middleware.AuthenticationMiddleware', 'django.contrib.messages.middleware.MessageMiddleware', 'django.middleware.clickjacking.XFrameOptionsMiddleware']
 ROOT_URLCONF = 'config.urls'
 TEMPLATES = [{'BACKEND':'django.template.backends.django.DjangoTemplates','DIRS':[BASE_DIR/'templates'],'APP_DIRS':True,'OPTIONS':{'context_processors':['django.template.context_processors.request','django.contrib.auth.context_processors.auth','django.contrib.messages.context_processors.messages','clinic.context.clinic_context']}}]
@@ -36,17 +43,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATA_DIR = Path(os.getenv('CLINIC_DATA_DIR', str(BASE_DIR / '.data')))
 DATA_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
 db_url = os.getenv('DATABASE_URL', '')
+if db_url and 'migrate' in sys.argv and os.getenv('DATABASE_URL_UNPOOLED'):
+    db_url = os.environ['DATABASE_URL_UNPOOLED']
 if db_url:
     db = urlparse(db_url)
     if db.scheme not in ('postgres', 'postgresql') or not db.hostname or not db.path.strip('/'):
         raise ImproperlyConfigured('DATABASE_URL must be a PostgreSQL connection URL.')
     query = parse_qs(db.query)
-    options = {'sslmode': query.get('sslmode', ['verify-full'])[0]}
+    options = {'sslmode': query.get('sslmode', ['verify-full'])[0], 'connect_timeout': 10}
+    if db.hostname.endswith('.neon.tech') and options['sslmode'] == 'require':
+        options['sslmode'] = 'verify-full'
     if PRODUCTION and options['sslmode'] != 'verify-full':
         raise ImproperlyConfigured('Production database TLS must use sslmode=verify-full.')
     if options['sslmode'] == 'verify-full':
         options['sslrootcert'] = os.getenv('DB_SSLROOTCERT', '/etc/ssl/certs/ca-certificates.crt')
-    DATABASES = {'default': {'ENGINE':'django.db.backends.postgresql','NAME':unquote(db.path[1:]),'USER':unquote(db.username or ''),'PASSWORD':unquote(db.password or ''),'HOST':db.hostname,'PORT':db.port or 5432,'CONN_MAX_AGE':60,'OPTIONS':options}}
+    if 'migrate' in sys.argv and '-pooler.' in db.hostname:
+        raise ImproperlyConfigured('Use DATABASE_URL_UNPOOLED for Neon schema migrations.')
+    DATABASES = {'default': {'ENGINE':'django.db.backends.postgresql','NAME':unquote(db.path[1:]),'USER':unquote(db.username or ''),'PASSWORD':unquote(db.password or ''),'HOST':db.hostname,'PORT':db.port or 5432,'CONN_MAX_AGE':0 if '-pooler.' in db.hostname else 60,'DISABLE_SERVER_SIDE_CURSORS':'-pooler.' in db.hostname,'OPTIONS':options}}
 else:
     if PRODUCTION:
         raise ImproperlyConfigured('DATABASE_URL is required in production.')
@@ -59,7 +72,13 @@ USE_TZ = True
 STATIC_URL = '/dash/static/'
 STATIC_ROOT = Path(os.getenv('CLINIC_STATIC_ROOT', str(BASE_DIR / 'staticfiles')))
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STORAGES = {'default':{'BACKEND':'django.core.files.storage.FileSystemStorage'},'staticfiles':{'BACKEND':'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
+CLINIC_DOCUMENT_STORAGE = os.getenv('CLINIC_DOCUMENT_STORAGE', 'filesystem')
+if CLINIC_DOCUMENT_STORAGE not in ('filesystem', 'database'):
+    raise ImproperlyConfigured('CLINIC_DOCUMENT_STORAGE must be filesystem or database.')
+CLINIC_DOCUMENT_BUDGET_BYTES = int(os.getenv('CLINIC_DOCUMENT_BUDGET_MB', '128')) * 1024 * 1024
+if not 0 < CLINIC_DOCUMENT_BUDGET_BYTES <= 512 * 1024 * 1024:
+    raise ImproperlyConfigured('The private document budget must be 1–512 MiB.')
+STORAGES = {'default':{'BACKEND':'document_store.storage.DatabaseDocumentStorage' if CLINIC_DOCUMENT_STORAGE == 'database' else 'django.core.files.storage.FileSystemStorage'},'staticfiles':{'BACKEND':'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
 MEDIA_ROOT = DATA_DIR / 'documents'
 # Deliberately no public MEDIA_URL or URL pattern. Files only via authorized FileResponse.
 FILE_UPLOAD_PERMISSIONS = 0o600
@@ -109,3 +128,10 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 15
+
+NEWSLETTER_TRANSPORT = os.getenv('NEWSLETTER_TRANSPORT', 'smtp')
+BREVO_API_KEY = os.getenv('BREVO_API_KEY', '')
+if NEWSLETTER_TRANSPORT not in ('smtp', 'brevo'):
+    raise ImproperlyConfigured('NEWSLETTER_TRANSPORT must be smtp or brevo.')
+if NEWSLETTER_TRANSPORT == 'brevo':
+    EMAIL_BACKEND = 'newsletter.https_email.BrevoConfirmationBackend'

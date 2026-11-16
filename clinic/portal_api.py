@@ -25,6 +25,7 @@ from django.utils.crypto import constant_time_compare
 from django.views.csrf import csrf_failure as default_csrf_failure
 from django.views.decorators.http import require_GET
 
+from document_store.exceptions import DocumentStorageFull
 from .access import role_for
 from .forms import DocumentForm, PatientForm, normalize
 from .models import AuditEvent, Document, LoginThrottle, Patient, PortalAccount, PortalRecoveryRequest, SiteActivity
@@ -365,6 +366,8 @@ def documents(request):
             document.patient_id = current.patient_id
             document.save()
             AuditEvent.objects.create(actor=request.user, action='portal.document_upload', target=str(document.pk))
+    except DocumentStorageFull:
+        raise PortalError('document_storage_full', 507) from None
     except Exception:
         if document.file.name and document.file._committed:
             document.file.delete(save=False)

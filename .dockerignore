@@ -9,3 +9,8 @@ __pycache__
 staticfiles
 .superpowers
 test-results
+
+.agents
+.codex
+skills-lock.json
+.neon

@@ -1,4 +1,6 @@
 import tempfile
+from pathlib import Path
+from unittest.mock import patch
 from django.apps import apps
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -109,6 +111,17 @@ class WorkflowTests(TestCase):
             r=self.client.post(detail+'documents/new/', {'title':'مدرک','category':'lab','file':SimpleUploadedFile(filename,body)})
             self.assertEqual(r.status_code,200)
         self.assertEqual(apps.get_model('clinic','Document').objects.count(),0)
+
+    @override_settings(STORAGES={'default':{'BACKEND':'django.core.files.storage.FileSystemStorage'},
+        'staticfiles':{'BACKEND':'django.contrib.staticfiles.storage.StaticFilesStorage'}})
+    def test_failed_staff_upload_removes_filesystem_bytes_after_metadata_rollback(self):
+        detail=self.create_patient()
+        with patch('clinic.views.audit',side_effect=RuntimeError('synthetic audit failure')):
+            with self.assertRaises(RuntimeError):
+                self.client.post(detail+'documents/new/',{'title':'مدرک ساختگی','category':'lab',
+                    'file':SimpleUploadedFile('synthetic.pdf',b'%PDF-1.7\nsynthetic\n%%EOF')})
+        self.assertEqual(apps.get_model('clinic','Document').objects.count(),0)
+        self.assertFalse(any(p.is_file() for p in Path(self.temp.name).rglob('*')))
 
     def test_advice_is_searchable_editable_printable_with_private_qr(self):
         r=self.client.post('/dash/advice/new/', {'title':'توصیه رفلاکس','tags':'گوارش','body':'متن آموزشی آزمایشی برای بازبینی پزشک','source':'منبع آزمایشی','is_approved':'on'})
