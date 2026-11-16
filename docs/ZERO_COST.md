@@ -2,6 +2,8 @@
 
 Owner constraint: **no purchases, card, paid trial, billing activation or automatic upgrade**. Free limits may stop the service; they must not become authorization to spend. Do not create more accounts to bypass provider limits. The existing GitHub/email identities can be used for normal signup. No extra Google account is required by this design.
 
+The owner subsequently requested an **Iranian free or low-cost comparison**, not a purchase. Live official prices and limitations are recorded in [IRAN_HOSTING_OPTIONS_2026-11-16.md](IRAN_HOSTING_OPTIONS_2026-11-16.md). Runflare offers a three-month, non-production test plan with deletion/no backups; its Docker paid pages show 320,000/440,000 toman monthly for 512MB/1GB respectively. These are published base prices, not a verified account quote, perpetual free patient hosting, live Neon connectivity or spending authorization.
+
 ## Current hosting checkpoint — Render and Northflank card barriers
 
 The owner's live screenshots show Render **Free / $0** selected, but creation opens **Add Card**. The owner confirmed the **Pre-Deploy Command is empty**; Free does not offer a persistent disk. No card, payment, service creation or hosted Clinic runtime has been verified. The earlier no-card Render recommendation was not validated for this account. Do not keep asking the owner to change unrelated fields or buy a card.
