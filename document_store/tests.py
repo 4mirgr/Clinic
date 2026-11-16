@@ -92,7 +92,7 @@ class PrivateUploadBudgetTests(TestCase):
 
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
-from django.db import close_old_connections
+from django.db import close_old_connections, connections
 from django.test import TransactionTestCase, skipUnlessDBFeature
 
 
@@ -115,7 +115,9 @@ class ConcurrentDocumentBudgetTests(TransactionTestCase):
                 except DocumentStorageFull:
                     return 'full'
             finally:
-                close_old_connections()
+                # Persistent connections are thread-local; close them even when
+                # fresh so Django can drop the disposable PostgreSQL database.
+                connections.close_all()
         with ThreadPoolExecutor(max_workers=2) as pool:
             results=list(pool.map(write,range(2)))
         self.assertCountEqual(results,['saved','full'])
