@@ -19,6 +19,7 @@ check:
 	$(VENV_PYTHON) manage.py makemigrations --check --dry-run
 	$(VENV_PYTHON) -m pip check
 	node --test deploy/cloudflare/worker.test.mjs
+	node --test deploy/preview/worker.test.mjs
 
 browser:
 	$(VENV_PYTHON) manage.py collectstatic --noinput

@@ -1,0 +1,126 @@
+{
+  "/clinic/": {
+    "path": "deploy/preview/public/dashboard.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/patients/": {
+    "path": "deploy/preview/public/patients.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/patients/new/": {
+    "path": "deploy/preview/public/patient-form.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/patients/11111111-1111-4111-8111-111111111111/": {
+    "path": "deploy/preview/public/patient-detail.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/patients/11111111-1111-4111-8111-111111111111/edit/": {
+    "path": "deploy/preview/public/patient-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/": {
+    "path": "deploy/preview/public/advice.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/new/": {
+    "path": "deploy/preview/public/advice-form.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/22222222-2222-4222-8222-222222222222/edit/": {
+    "path": "deploy/preview/public/advice-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/22222222-2222-4222-8222-222222222222/print/": {
+    "path": "deploy/preview/public/advice-print.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/patients/11111111-1111-4111-8111-111111111111/advice/": {
+    "path": "deploy/preview/public/advice-select.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/patients/11111111-1111-4111-8111-111111111111/advice/22222222-2222-4222-8222-222222222222/": {
+    "path": "deploy/preview/public/advice-confirm.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice-records/33333333-3333-4333-8333-333333333333/": {
+    "path": "deploy/preview/public/advice-record.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/calendar/": {
+    "path": "deploy/preview/public/calendar.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/calendar/settings/": {
+    "path": "deploy/preview/public/calendar-settings.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/calendar/availability/": {
+    "path": "deploy/preview/public/availability.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/activity/": {
+    "path": "deploy/preview/public/activity.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/qr/": {
+    "path": "deploy/preview/public/site-qr.svg",
+    "type": "image/svg+xml"
+  },
+  "/clinic/portal/": {
+    "path": "deploy/preview/public/portal.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/booking/": {
+    "path": "deploy/preview/public/booking.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/login/": {
+    "path": "deploy/preview/public/login.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/login/manager/": {
+    "path": "deploy/preview/public/manager-login.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/login/secretary/": {
+    "path": "deploy/preview/public/secretary-login.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/static/clinic/app.css": {
+    "path": "static/clinic/app.css",
+    "type": "text/css; charset=utf-8"
+  },
+  "/clinic/static/clinic/portal.css": {
+    "path": "static/clinic/portal.css",
+    "type": "text/css; charset=utf-8"
+  },
+  "/clinic/static/clinic/favicon.svg": {
+    "path": "static/clinic/favicon.svg",
+    "type": "image/svg+xml"
+  },
+  "/clinic/static/clinic/art/clinical-orbit.png": {
+    "path": "static/clinic/art/clinical-orbit.png",
+    "type": "image/png"
+  },
+  "/clinic/static/clinic/fonts/vazirmatn-arabic-400-normal.woff2": {
+    "path": "static/clinic/fonts/vazirmatn-arabic-400-normal.woff2",
+    "type": "font/woff2"
+  },
+  "/clinic/static/clinic/fonts/vazirmatn-arabic-600-normal.woff2": {
+    "path": "static/clinic/fonts/vazirmatn-arabic-600-normal.woff2",
+    "type": "font/woff2"
+  },
+  "/clinic/static/clinic/fonts/OFL.txt": {
+    "path": "static/clinic/fonts/OFL.txt",
+    "type": "text/plain; charset=utf-8"
+  },
+  "/clinic/preview.css": {
+    "path": "deploy/preview/preview.css",
+    "type": "text/css; charset=utf-8"
+  },
+  "/clinic/preview.js": {
+    "path": "deploy/preview/preview.js",
+    "type": "text/javascript; charset=utf-8"
+  }
+}

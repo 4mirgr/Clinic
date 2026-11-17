@@ -60,3 +60,5 @@ jobs:
         run: |
           python manage.py test clinic.browser_checks --noinput
           node --test deploy/cloudflare/worker.test.mjs
+          node --test deploy/preview/worker.test.mjs
+          python scripts/check_preview.py
