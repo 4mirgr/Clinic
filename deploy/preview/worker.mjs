@@ -21,7 +21,7 @@ export function createPreviewWorker(manifest, revision) {
       let source = await cache?.match(key);
       if (!source) {
         try {
-          source = await fetch(`https://raw.githubusercontent.com/4mirgr/Clinic/${revision}/${asset.path}`,{redirect:'error'});
+          source = await fetch(`https://raw.githubusercontent.com/4mirgr/Clinic/${revision}/${asset.path}`,{redirect:'manual'});
           if (!source.ok) throw new Error('Snapshot source unavailable');
           source = new Response(source.body,{headers:{'Content-Type':asset.type,'Cache-Control':'public, max-age=86400'}});
           if (cache && ctx.waitUntil) ctx.waitUntil(cache.put(key,source.clone()));

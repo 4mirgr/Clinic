@@ -18,7 +18,8 @@ test('preview serves only allowlisted GET/HEAD paths and never forwards submitte
 test('source is pinned to one commit and upstream cookies are never returned',async()=>{
   const worker=createPreviewWorker(manifest,revision);
   const original=globalThis.fetch;
-  globalThis.fetch=async request=>{
+  globalThis.fetch=async(request,options)=>{
+    assert.equal(options.redirect,'manual');
     assert.equal(request,`https://raw.githubusercontent.com/4mirgr/Clinic/${revision}/deploy/preview/public/dashboard.html`);
     return new Response('<html>synthetic preview</html>',{headers:{'Set-Cookie':'upstream=never-forward'}});
   };
