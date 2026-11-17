@@ -1,0 +1,174 @@
+{
+  "checked_on": "2026-11-17",
+  "method": "Firecrawl live scrape (maxAge: 0); source pages read for original Persian patient-education drafts. HTTP success is not clinical endorsement; physician review required.",
+  "sources": [
+    {
+      "key": "hypertension",
+      "url": "https://www.nhs.uk/conditions/high-blood-pressure-hypertension/",
+      "title": "High blood pressure - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "dyslipidemia",
+      "url": "https://www.nhs.uk/conditions/high-cholesterol/how-to-lower-your-cholesterol/",
+      "title": "High cholesterol - How to lower your cholesterol - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "diabetes",
+      "url": "https://www.nhs.uk/conditions/type-2-diabetes/food-and-keeping-active/",
+      "title": "Treatment for type 2 diabetes - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "hypoglycemia",
+      "url": "https://www.nhs.uk/conditions/low-blood-sugar-hypoglycaemia/",
+      "title": "Low blood sugar (hypoglycaemia) - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "gerd",
+      "url": "https://www.niddk.nih.gov/health-information/digestive-diseases/acid-reflux-ger-gerd-adults/eating-diet-nutrition",
+      "title": "Eating, Diet, & Nutrition for GER & GERD - NIDDK",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "constipation",
+      "url": "https://www.niddk.nih.gov/health-information/digestive-diseases/constipation/treatment",
+      "title": "Treatment for Constipation - NIDDK",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "asthma",
+      "url": "https://www.nhs.uk/conditions/asthma/",
+      "title": "Asthma - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "copd",
+      "url": "https://www.nhs.uk/conditions/chronic-obstructive-pulmonary-disease-copd/living-with/",
+      "title": "Chronic obstructive pulmonary disease (COPD) - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "ckd",
+      "url": "https://www.niddk.nih.gov/health-information/kidney-disease/chronic-kidney-disease-ckd/managing",
+      "title": "Managing Chronic Kidney Disease - NIDDK",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "kidney-stones",
+      "url": "https://www.niddk.nih.gov/health-information/urologic-diseases/kidney-stones/eating-diet-nutrition",
+      "title": "Eating, Diet, & Nutrition for Kidney Stones - NIDDK",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "iron-anemia",
+      "url": "https://www.nhs.uk/conditions/iron-deficiency-anaemia/",
+      "title": "Iron deficiency anaemia - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "anticoagulants",
+      "url": "https://www.nhs.uk/conditions/anticoagulants/considerations/",
+      "title": "Anticoagulant medicines - Considerations - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "gout",
+      "url": "https://www.nhs.uk/conditions/gout/",
+      "title": "Gout - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "osteoarthritis",
+      "url": "https://www.nhs.uk/conditions/osteoarthritis/living-with/",
+      "title": "Osteoarthritis - Living with - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "common-cold",
+      "url": "https://www.nhs.uk/conditions/common-cold/",
+      "title": "Common cold - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "antibiotics",
+      "url": "https://www.nhs.uk/conditions/antibiotics/",
+      "title": "Antibiotics - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "allergic-rhinitis",
+      "url": "https://www.nhs.uk/conditions/allergic-rhinitis/",
+      "title": "Allergic rhinitis - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "urticaria",
+      "url": "https://www.nhs.uk/conditions/hives/",
+      "title": "Hives - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "oncology-infection",
+      "url": "https://www.cancer.gov/about-cancer/treatment/side-effects/infection",
+      "title": "Infection and Neutropenia and Cancer Treatment - Side Effects - NCI",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "oncology-fatigue",
+      "url": "https://www.cancer.gov/about-cancer/treatment/side-effects/fatigue",
+      "title": "Fatigue and Cancer - Side Effects - NCI",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "falls",
+      "url": "https://www.nia.nih.gov/health/falls-and-falls-prevention/falls-and-fractures-older-adults-causes-and-prevention",
+      "title": "Falls and Fractures in Older Adults: Causes and Prevention | National Institute on Aging",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "medication-safety",
+      "url": "https://www.nia.nih.gov/health/medicines-and-medication-management/taking-medicines-safely-you-age",
+      "title": "Taking Medicines Safely as You Age | National Institute on Aging",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "sleep-apnea",
+      "url": "https://www.nhs.uk/conditions/sleep-apnoea/",
+      "title": "Sleep apnoea - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    },
+    {
+      "key": "insomnia",
+      "url": "https://www.nhs.uk/conditions/insomnia/",
+      "title": "Insomnia - NHS",
+      "status": 200,
+      "retrieved": "2026-11-17"
+    }
+  ]
+}

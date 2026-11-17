@@ -97,3 +97,5 @@ GOOGLE_CALENDAR_ACCOUNT = os.getenv('GOOGLE_CALENDAR_ACCOUNT','dr.gerami.md@gmai
 
 CSRF_FAILURE_VIEW = 'clinic.portal_api.csrf_failure'
 PASSWORD_RESET_TIMEOUT = 900
+
+CLINIC_PUBLIC_URL = os.environ.get('CLINIC_PUBLIC_URL', CLINIC_SITE+'/dash').rstrip('/')

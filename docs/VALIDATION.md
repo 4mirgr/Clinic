@@ -30,3 +30,9 @@ Development code and isolated checks are complete for the Jalali scheduling incr
 - Original Drive template and local original logo files could not be fetched here. Current artwork is generated decorative art with provenance, not a faithful template or original logo installation.
 
 See PROJECT_HANDOFF.md for stage history/commit and push evidence, README.md for startup and docs/GOOGLE_CALENDAR.md for the exact OAuth callback. Cloud environment setup/start instructions are saved in a draft; that does not publish/apply the environment or deploy the application.
+
+## Education library / packet update (2026-11-17)
+
+Original site logo is now installed with provenance in `static/clinic/brand/PROVENANCE.md`; the older logo-unavailable note above describes the earlier stage. Combined advice assignment, immutable ordered snapshots, source metadata and an explicitly published patient summary are now implemented. Full library revision history, production hosting, MFA and actual patient activation remain separate work.
+
+Stage 8 evidence: 106/106 SQLite; 104/106 PostgreSQL 17 with two intentional SQLite-only skips; six native Chromium workflows; three proxy and two preview Node tests. Packet race covered on both databases. Synthetic five-page WeasyPrint PDF has only embedded Vazirmatn fonts, repeated branding and a raster-decoded final QR. Chromium public-preview PDF repeats the brand on every page with table header/footer space reserved and wrapped long bullets; PDF coordinate/font regressions pass. Final Docker build and non-root/read-only temporary-container PDF smoke pass. This is local verification, not a claim that remote CI or the native clinical service is deployed.

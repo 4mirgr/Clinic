@@ -1,0 +1,1 @@
+{% load clinic_dates %}{% if advice_packets %}<div class="packet-history"><h3>بسته‌های توصیه ثبت‌شده</h3>{% for packet in advice_packets %}<p><a href="{{ packet.get_absolute_url }}">توصیه‌های {{ packet.created_at|jalali_datetime }} · مشاهده / PDF</a></p>{% endfor %}</div>{% endif %}

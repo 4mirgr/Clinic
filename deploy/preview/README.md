@@ -39,3 +39,5 @@ drgerami-md.ir/clinic/*
 - https://developers.cloudflare.com/workers/languages/python/packages/django/
 - https://developers.cloudflare.com/hyperdrive/examples/python-workers/
 - https://developers.cloudflare.com/containers/platform/pricing/
+
+Education preview adds 24 source-backed drafts with local bilingual/category filtering and ordered checkbox selection. Only `q`, `specialty`, and `advice_ids` controls are enabled; the patient is a fixed synthetic record. `preview.js` builds a print DOM locally; it never submits or stores clinical data. All POST routes remain rejected by the Worker. Full-text/edit pages are synthetic exports; edit inputs stay disabled. The summary URL and QR lead to a clearly labeled synthetic page. A finite allowlisted `/clinic/advice/sample.pdf` contains a generated five-page draft, never a real record. Native Django summary/packet readers retain authentication and current patient ownership checks.

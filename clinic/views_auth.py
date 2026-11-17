@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+from django.utils.http import url_has_allowed_host_and_scheme
 import hashlib
 from datetime import timedelta
 
@@ -28,10 +30,15 @@ class RoleLoginForm(AuthenticationForm):
             raise ValidationError('نام کاربری، رمز عبور یا نوع دسترسی صحیح نیست.')
 
 
+def safe_next(request):
+    value=request.GET.get('next','')
+    return value if value.startswith('/dash/') and url_has_allowed_host_and_scheme(value,allowed_hosts=set(),require_https=request.is_secure()) else ''
+
+
 def login_choice(request):
     if role_for(request.user):
         return redirect('dashboard')
-    return render(request, 'clinic/login_choice.html')
+    return render(request, 'clinic/login_choice.html', {'next_url':safe_next(request)})
 
 
 def portal_login(request, role):
@@ -62,7 +69,7 @@ def portal_login(request, role):
                 throttle.delete()
                 login(request, form.get_user())
                 request.session.set_expiry(1800)
-                return redirect('dashboard')
+                return redirect(safe_next(request) or 'dashboard')
             else:
                 throttle.failures += 1
                 throttle.save(update_fields=['failures', 'expires'])

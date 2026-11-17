@@ -63,6 +63,202 @@
     "path": "deploy/preview/public/activity.html",
     "type": "text/html; charset=utf-8"
   },
+  "/clinic/patients/11111111-1111-4111-8111-111111111111/summary/": {
+    "path": "deploy/preview/public/patient-summary.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/173427b9-5813-538b-91e8-ba3fc82a1b7c/print/": {
+    "path": "deploy/preview/public/guide-hypertension.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/173427b9-5813-538b-91e8-ba3fc82a1b7c/edit/": {
+    "path": "deploy/preview/public/guide-hypertension-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/eeccaeba-3a7a-53bf-b165-1592c5b8eae1/print/": {
+    "path": "deploy/preview/public/guide-copd.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/eeccaeba-3a7a-53bf-b165-1592c5b8eae1/edit/": {
+    "path": "deploy/preview/public/guide-copd-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/12f4dfd5-404b-5b68-8947-3dfb83d6f154/print/": {
+    "path": "deploy/preview/public/guide-osteoarthritis.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/12f4dfd5-404b-5b68-8947-3dfb83d6f154/edit/": {
+    "path": "deploy/preview/public/guide-osteoarthritis-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/90a9a96f-e644-54cb-86dc-1cde42b62ae2/print/": {
+    "path": "deploy/preview/public/guide-hypoglycemia.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/90a9a96f-e644-54cb-86dc-1cde42b62ae2/edit/": {
+    "path": "deploy/preview/public/guide-hypoglycemia-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/2692132b-59ec-5dfd-bbef-743d144673bc/print/": {
+    "path": "deploy/preview/public/guide-insomnia.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/2692132b-59ec-5dfd-bbef-743d144673bc/edit/": {
+    "path": "deploy/preview/public/guide-insomnia-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/fa9a111c-5ac6-5ec1-ba69-cd99a723e1fc/print/": {
+    "path": "deploy/preview/public/guide-common-cold.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/fa9a111c-5ac6-5ec1-ba69-cd99a723e1fc/edit/": {
+    "path": "deploy/preview/public/guide-common-cold-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/98a8cdb0-78ee-5e44-8487-d5fd4eee7457/print/": {
+    "path": "deploy/preview/public/guide-ckd.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/98a8cdb0-78ee-5e44-8487-d5fd4eee7457/edit/": {
+    "path": "deploy/preview/public/guide-ckd-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/ac4becb8-deb9-50ba-b1a3-7e9d17a60c4e/print/": {
+    "path": "deploy/preview/public/guide-gout.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/ac4becb8-deb9-50ba-b1a3-7e9d17a60c4e/edit/": {
+    "path": "deploy/preview/public/guide-gout-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/612cfe42-1598-5551-a0ec-55e4a24209cf/print/": {
+    "path": "deploy/preview/public/guide-sleep-apnea.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/612cfe42-1598-5551-a0ec-55e4a24209cf/edit/": {
+    "path": "deploy/preview/public/guide-sleep-apnea-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/beb8a8c9-be2d-58f4-bd1f-723e2c3a8d20/print/": {
+    "path": "deploy/preview/public/guide-iron-anemia.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/beb8a8c9-be2d-58f4-bd1f-723e2c3a8d20/edit/": {
+    "path": "deploy/preview/public/guide-iron-anemia-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/61a7ffee-f06f-508f-80f7-9ff6c657045b/print/": {
+    "path": "deploy/preview/public/guide-urticaria.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/61a7ffee-f06f-508f-80f7-9ff6c657045b/edit/": {
+    "path": "deploy/preview/public/guide-urticaria-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/21f6b8e5-1430-5f56-bd84-994057e1ba5b/print/": {
+    "path": "deploy/preview/public/guide-diabetes.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/21f6b8e5-1430-5f56-bd84-994057e1ba5b/edit/": {
+    "path": "deploy/preview/public/guide-diabetes-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/a4a2015f-3d08-5613-9512-81181cd25ce0/print/": {
+    "path": "deploy/preview/public/guide-asthma.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/a4a2015f-3d08-5613-9512-81181cd25ce0/edit/": {
+    "path": "deploy/preview/public/guide-asthma-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/332f4139-fbdf-5a13-a236-2b92f77fd2e6/print/": {
+    "path": "deploy/preview/public/guide-medication-safety.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/332f4139-fbdf-5a13-a236-2b92f77fd2e6/edit/": {
+    "path": "deploy/preview/public/guide-medication-safety-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/1c1d30ce-7847-5b93-af32-edc7a880074c/print/": {
+    "path": "deploy/preview/public/guide-antibiotics.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/1c1d30ce-7847-5b93-af32-edc7a880074c/edit/": {
+    "path": "deploy/preview/public/guide-antibiotics-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/52449d46-c832-59bf-b7fa-eb2ebd28352c/print/": {
+    "path": "deploy/preview/public/guide-anticoagulants.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/52449d46-c832-59bf-b7fa-eb2ebd28352c/edit/": {
+    "path": "deploy/preview/public/guide-anticoagulants-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/398ba4f7-6f29-5c93-ac26-5ec34b73a10d/print/": {
+    "path": "deploy/preview/public/guide-gerd.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/398ba4f7-6f29-5c93-ac26-5ec34b73a10d/edit/": {
+    "path": "deploy/preview/public/guide-gerd-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/542fba3d-5442-5a52-bd9e-228fcc3970af/print/": {
+    "path": "deploy/preview/public/guide-falls.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/542fba3d-5442-5a52-bd9e-228fcc3970af/edit/": {
+    "path": "deploy/preview/public/guide-falls-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/50d24637-6b5c-5d16-bd10-2aee027e6c22/print/": {
+    "path": "deploy/preview/public/guide-oncology-infection.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/50d24637-6b5c-5d16-bd10-2aee027e6c22/edit/": {
+    "path": "deploy/preview/public/guide-oncology-infection-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/65bc4762-3d20-59a5-a57a-0fb6dc32539c/print/": {
+    "path": "deploy/preview/public/guide-kidney-stones.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/65bc4762-3d20-59a5-a57a-0fb6dc32539c/edit/": {
+    "path": "deploy/preview/public/guide-kidney-stones-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/f2961d16-447a-58db-9639-7a64e20ffd8c/print/": {
+    "path": "deploy/preview/public/guide-constipation.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/f2961d16-447a-58db-9639-7a64e20ffd8c/edit/": {
+    "path": "deploy/preview/public/guide-constipation-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/60ec2ee7-5826-59fa-9348-71ec902aca72/print/": {
+    "path": "deploy/preview/public/guide-dyslipidemia.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/60ec2ee7-5826-59fa-9348-71ec902aca72/edit/": {
+    "path": "deploy/preview/public/guide-dyslipidemia-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/87148d56-f5d0-5fc6-90b7-937a6c40acd6/print/": {
+    "path": "deploy/preview/public/guide-oncology-fatigue.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/87148d56-f5d0-5fc6-90b7-937a6c40acd6/edit/": {
+    "path": "deploy/preview/public/guide-oncology-fatigue-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/0a967d0a-c7d1-5e61-9b48-87141efa5fb0/print/": {
+    "path": "deploy/preview/public/guide-allergic-rhinitis.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/advice/0a967d0a-c7d1-5e61-9b48-87141efa5fb0/edit/": {
+    "path": "deploy/preview/public/guide-allergic-rhinitis-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
   "/clinic/advice/qr/": {
     "path": "deploy/preview/public/site-qr.svg",
     "type": "image/svg+xml"
@@ -86,6 +282,30 @@
   "/clinic/login/secretary/": {
     "path": "deploy/preview/public/secretary-login.html",
     "type": "text/html; charset=utf-8"
+  },
+  "/clinic/static/clinic/print-pager.js": {
+    "path": "static/clinic/print-pager.js",
+    "type": "text/javascript; charset=utf-8"
+  },
+  "/clinic/static/clinic/education.css": {
+    "path": "static/clinic/education.css",
+    "type": "text/css; charset=utf-8"
+  },
+  "/clinic/static/clinic/education.js": {
+    "path": "static/clinic/education.js",
+    "type": "text/javascript; charset=utf-8"
+  },
+  "/clinic/static/clinic/brand/logo.webp": {
+    "path": "static/clinic/brand/logo.webp",
+    "type": "image/webp"
+  },
+  "/clinic/static/clinic/fonts/vazirmatn-print-regular.ttf": {
+    "path": "static/clinic/fonts/vazirmatn-print-regular.ttf",
+    "type": "font/ttf"
+  },
+  "/clinic/static/clinic/fonts/vazirmatn-print-semibold.ttf": {
+    "path": "static/clinic/fonts/vazirmatn-print-semibold.ttf",
+    "type": "font/ttf"
   },
   "/clinic/static/clinic/app.css": {
     "path": "static/clinic/app.css",
@@ -114,6 +334,10 @@
   "/clinic/static/clinic/fonts/OFL.txt": {
     "path": "static/clinic/fonts/OFL.txt",
     "type": "text/plain; charset=utf-8"
+  },
+  "/clinic/advice/sample.pdf": {
+    "path": "docs/previews/education-demo.pdf",
+    "type": "application/pdf"
   },
   "/clinic/preview.css": {
     "path": "deploy/preview/preview.css",

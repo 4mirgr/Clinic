@@ -89,7 +89,7 @@ def patient_detail(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
     audit(request,'patient.view',pk)
     from .advice_views import history_page
-    return render(request,'clinic/patient_detail.html',{'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm(),'portal_profile':getattr(patient,'portal_account',None),'portal_activity':consented_activity(patient),'advice_deliveries':history_page(request, patient.pk)})
+    return render(request,'clinic/patient_detail.html',{'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm(),'portal_profile':getattr(patient,'portal_account',None),'portal_activity':consented_activity(patient),'advice_deliveries':history_page(request, patient.pk),'advice_packets':patient.advice_packets.all()[:20]})
 
 
 @manager_required
@@ -150,11 +150,8 @@ def document_download(request, pk):
 @manager_required
 @require_GET
 def advice_list(request):
-    q = normalize(request.GET.get('q','')[:200])
-    records = Advice.objects.all()
-    if q:
-        records = records.filter(Q(title__icontains=q)|Q(tags__icontains=q)|Q(body__icontains=q))
-    return render(request,'clinic/advice_list.html',{'section':'advice','q':q,'page':Paginator(records,20).get_page(request.GET.get('page'))})
+    from .education_views import library_context
+    return render(request, 'clinic/advice_list.html', library_context(request))
 
 
 @manager_required
@@ -166,7 +163,11 @@ def advice_edit(request, pk=None):
         with transaction.atomic():
             advice = form.save(commit=False)
             advice.updated_by = request.user
+            approve = form.cleaned_data['is_approved']
             advice.save()
+            if approve and not advice.is_approved:
+                advice.is_approved = True
+                advice.save()
             audit(request,'advice.save',advice.pk)
         return redirect('advice_print', pk=advice.pk)
     return render(request,'clinic/form.html',{'section':'advice','form':form,'title':'ویرایش توصیه' if pk else 'توصیه جدید','description':'تیترها و بندها را در سطرهای جدا بنویسید. پیش از ارائه به بیمار، متن را بازبینی و تأیید کنید.','back_url':'advice'})
@@ -177,7 +178,8 @@ def advice_edit(request, pk=None):
 def advice_print(request, pk):
     advice = get_object_or_404(Advice,pk=pk)
     audit(request,'advice.print_view',pk)
-    return render(request,'clinic/advice_print.html',{'advice':advice})
+    from .education_views import decorate
+    return render(request,'clinic/advice_print.html',{'advice':decorate(advice)})
 
 
 @manager_required

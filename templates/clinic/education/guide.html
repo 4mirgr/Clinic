@@ -1,0 +1,5 @@
+<article class="patient-guide" data-guide="{{ guide.pk }}">
+<h1>{{ guide.title }}</h1>{% if guide.title_en %}<p class="english-title" dir="ltr">{{ guide.title_en }}</p>{% endif %}
+{% for section in guide.sections %}<section>{% if section.heading %}<h2>{{ section.heading }}</h2>{% endif %}<ul>{% for item in section.items %}<li>{{ item }}</li>{% endfor %}</ul></section>{% endfor %}
+{% if guide.source %}<aside class="guide-source"><strong>منابع و بازبینی</strong><p>{{ guide.source|linebreaksbr }}</p></aside>{% endif %}
+</article>

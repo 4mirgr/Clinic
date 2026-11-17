@@ -38,10 +38,12 @@ class ReadOnlyHTML(HTMLParser):
             attributes.pop('method', None)
             attributes['action'] = '#'
             attributes['data-preview-form'] = ''
-        if tag in ('input', 'textarea', 'select') and attributes.get('name') != 'q':
+        if tag in ('input', 'textarea', 'select') and attributes.get('name') not in ('q','specialty','advice_ids'):
             attributes['disabled'] = ''
-        if tag == 'button' and attributes.get('type', 'submit') == 'submit' and not self.theme_form:
+        if tag == 'button' and attributes.get('type', 'submit') == 'submit' and not self.theme_form and 'data-demo-combine' not in attributes:
             attributes['disabled'] = ''
+        if tag == 'option' and attributes.get('value') == '11111111-1111-4111-8111-111111111111':
+            attributes['selected'] = ''
         if attributes.get('href') == '/account/':
             attributes['href'] = '/clinic/login/'
         rendered = ''.join(f' {key}' if value is None else f' {key}="{html.escape(value, quote=True)}"' for key, value in attributes.items())
@@ -56,7 +58,7 @@ class ReadOnlyHTML(HTMLParser):
         if self.skip_script:
             return
         if tag == 'head':
-            self.parts.append('<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css"><script src="/clinic/preview.js" defer></script>')
+            self.parts.append('<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css"><script src="/clinic/static/clinic/print-pager.js" defer></script><script src="/clinic/preview.js" defer></script>')
         if tag == 'form':
             self.theme_form = False
         self.parts.append(f'</{tag}>')
@@ -80,7 +82,7 @@ def build(output):
     # connection to the checkout database, real accounts or external services.
     with tempfile.TemporaryDirectory(prefix='clinic-public-preview-') as data_dir:
         os.environ.update(CLINIC_ENV='development', DATABASE_URL='', CLINIC_DATA_DIR=data_dir,
-                          CLINIC_PROXY_KEY='', GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET='',
+                          CLINIC_PUBLIC_URL='https://drgerami-md.ir/clinic', CLINIC_PROXY_KEY='', GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET='',
                           GOOGLE_TOKEN_ENCRYPTION_KEY='', DJANGO_SETTINGS_MODULE='config.settings',
                           DJANGO_ALLOWED_HOSTS='testserver,localhost,127.0.0.1',
                           DJANGO_SECRET_KEY='isolated-preview-build-only-not-a-production-secret-8543189265074138')
@@ -89,7 +91,8 @@ def build(output):
         from django.contrib.auth.models import Group, User
         from django.core.management import call_command
         from django.test import Client
-        from clinic.models import Advice, AdviceDelivery, Patient, PortalAccount, Visit
+        from clinic.models import Advice, AdviceDelivery, Patient, PortalAccount, Visit, PatientSummary
+        from clinic.advice_catalog import load_defaults
         call_command('migrate', interactive=False, verbosity=0)
         doctor = User.objects.create_user('preview-doctor', first_name='پزشک آزمایشی')
         doctor.groups.add(Group.objects.get_or_create(name='clinic_manager')[0])
@@ -99,6 +102,8 @@ def build(output):
         record = AdviceDelivery.objects.create(id=uuid.UUID('33333333-3333-4333-8333-333333333333'), patient=patient, advice=advice, title=advice.title, body=advice.body, tags=advice.tags, source=advice.source, advice_updated_at=advice.updated_at, created_by=doctor, request_key=uuid.UUID('44444444-4444-4444-8444-444444444444'))
         member = User.objects.create_user('preview-patient', first_name='بیمار آزمایشی')
         PortalAccount.objects.create(user=member, patient=patient, email='preview@example.test')
+        load_defaults(doctor)
+        PatientSummary.objects.create(patient=patient, updated_by=doctor, published_by=doctor, published_at=advice.updated_at, draft_data={}, published_data={'history':'خلاصهٔ کاملاً ساختگی برای نمایش طراحی؛ مربوط به هیچ شخصی نیست.','conditions':'بیماری نمونه؛ اطلاعات واقعی نیست.','medications':'داروی نمونه؛ دستور مصرف نیست.','health_status':'وضعیت سلامت ساختگی','progress':'روند پیگیری نمایشی'})
         client = Client()
         client.force_login(doctor)
         pages = {
@@ -110,7 +115,11 @@ def build(output):
             record.get_absolute_url(): 'advice-record.html', '/dash/calendar/': 'calendar.html',
             '/dash/calendar/settings/': 'calendar-settings.html', '/dash/calendar/availability/': 'availability.html',
             '/dash/activity/': 'activity.html',
+            patient.get_absolute_url()+'summary/': 'patient-summary.html',
         }
+        for guide in Advice.objects.exclude(catalog_key=None):
+            pages[f'/dash/advice/{guide.pk}/print/']='guide-'+guide.catalog_key+'.html'
+            pages[f'/dash/advice/{guide.pk}/edit/']='guide-'+guide.catalog_key+'-edit.html'
         manifest = {}
 
         def capture(route, filename):
@@ -120,6 +129,9 @@ def build(output):
             parser = ReadOnlyHTML()
             parser.feed(response.content.decode().replace('/dash/', '/clinic/'))
             rendered = ''.join(parser.parts)
+            if route == '/dash/advice/':
+                rendered=rendered.replace('<section class="card education-library"', '<p><a href="/clinic/advice/sample.pdf">دریافت نمونه PDF پنج‌صفحه‌ای با وزیرمتن و QR آزمایشی</a></p><section class="card education-library"')
+                rendered=rendered.replace('<button class="button primary" type="submit" disabled="">بازبینی و آماده‌سازی چاپ</button>','<button class="button primary" type="button" data-demo-combine>ساخت پیش‌نمایش چاپ</button>')
             (output / filename).write_text('\n'.join(line.rstrip() for line in rendered.splitlines())+'\n')
             manifest[route.replace('/dash/', '/clinic/')] = {'path':'deploy/preview/public/'+filename, 'type':'text/html; charset=utf-8'}
 
@@ -140,12 +152,15 @@ def build(output):
         for route, filename in [('/dash/login/','login.html'),('/dash/login/manager/','manager-login.html'),('/dash/login/secretary/','secretary-login.html')]:
             capture(route, filename)
         assets = {
+            'print-pager.js':'text/javascript; charset=utf-8', 'education.css':'text/css; charset=utf-8', 'education.js':'text/javascript; charset=utf-8', 'brand/logo.webp':'image/webp',
+            'fonts/vazirmatn-print-regular.ttf':'font/ttf', 'fonts/vazirmatn-print-semibold.ttf':'font/ttf',
             'app.css':'text/css; charset=utf-8', 'portal.css':'text/css; charset=utf-8', 'favicon.svg':'image/svg+xml',
             'art/clinical-orbit.png':'image/png', 'fonts/vazirmatn-arabic-400-normal.woff2':'font/woff2',
             'fonts/vazirmatn-arabic-600-normal.woff2':'font/woff2', 'fonts/OFL.txt':'text/plain; charset=utf-8',
         }
         for path, content_type in assets.items():
             manifest['/clinic/static/clinic/'+path] = {'path':'static/clinic/'+path, 'type':content_type}
+        manifest['/clinic/advice/sample.pdf']={'path':'docs/previews/education-demo.pdf','type':'application/pdf'}
         for path, content_type in [('preview.css','text/css; charset=utf-8'),('preview.js','text/javascript; charset=utf-8')]:
             manifest['/clinic/'+path] = {'path':'deploy/preview/'+path, 'type':content_type}
         (output / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n')

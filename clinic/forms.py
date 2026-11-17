@@ -80,5 +80,5 @@ class AdviceForm(forms.ModelForm):
 
     class Meta:
         model = Advice
-        fields = ['title','tags','body','source','is_approved']
+        fields = ['title','title_en','specialty','tags','body','source','is_approved']
         widgets = {'body':forms.Textarea(attrs={'rows':14}), 'source':forms.Textarea(attrs={'rows':3})}

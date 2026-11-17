@@ -521,7 +521,10 @@ def patient_home(request):
         account = account_for(request, True)
     except PortalError as error:
         if error.status == 401:
-            return redirect('/account/?next=%2Fdash%2Fportal%2F')
+            from .views_auth import safe_next
+            from urllib.parse import urlencode
+            return redirect('/account/?'+urlencode({'next':safe_next(request) or '/dash/portal/'}))
         return answer({'error': error.code}, error.status)
     from .advice_views import history_page
-    return render(request, 'clinic/portal.html', {'advice_deliveries': history_page(request, account.patient_id)})
+    clinical = role_for(request.user) != 'secretary'
+    return render(request, 'clinic/portal.html', {'advice_deliveries': history_page(request, account.patient_id), 'advice_packets': account.patient.advice_packets.all()[:20] if account.patient_id and clinical else [], 'linked_patient':account.patient if account.patient_id and clinical else None})

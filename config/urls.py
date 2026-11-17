@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views
+from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views,education_views
 
 urlpatterns = [
     path('dash/api/portal/documents/<uuid:pk>/download', portal_api.document_download),
@@ -35,7 +35,15 @@ urlpatterns = [
     path('dash/patients/<uuid:pk>/visits/new/', views.visit_new, name='visit_new'),
     path('dash/patients/<uuid:pk>/documents/new/', views.document_new, name='document_new'),
     path('dash/documents/<uuid:pk>/download/', views.document_download, name='document_download'),
-    path('dash/advice/', views.advice_list, name='advice'),
+    path('dash/patients/<uuid:pk>/summary/', education_views.summary, name='patient_summary'),
+    path('dash/patients/<uuid:pk>/summary/edit/', education_views.summary_edit, name='patient_summary_edit'),
+    path('dash/patients/<uuid:pk>/summary/withdraw/', education_views.summary_withdraw, name='patient_summary_withdraw'),
+    path('dash/advice/bundles/prepare/', education_views.prepare, name='advice_packet_prepare'),
+    path('dash/advice/bundles/confirm/', education_views.confirm, name='advice_packet_confirm'),
+    path('dash/advice/bundles/preview.pdf', education_views.draft_pdf, name='advice_packet_preview_pdf'),
+    path('dash/advice/bundles/<uuid:pk>/', education_views.packet_view, name='advice_packet'),
+    path('dash/advice/bundles/<uuid:pk>/pdf/', education_views.packet_view, {'pdf':True}, name='advice_packet_pdf'),
+    path('dash/advice/',  views.advice_list, name='advice'),
     path('dash/advice/new/', views.advice_edit, name='advice_new'),
     path('dash/advice/qr/', views.advice_qr, name='advice_qr'),
     path('dash/advice/<uuid:pk>/edit/', views.advice_edit, name='advice_edit'),

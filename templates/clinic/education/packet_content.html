@@ -1,0 +1,8 @@
+{% load static clinic_dates %}
+<header class="print-brand"><img src="{% if pdf_logo %}{{ pdf_logo }}{% else %}{% static 'clinic/brand/logo.webp' %}{% endif %}" alt="لوگوی دکتر گرامی"><span>دکتر امیرهوشنگ گرامی · متخصص داخلی<br><bdi>drgerami-md.ir</bdi></span></header>
+<footer class="print-brand print-footer"><img src="{% if pdf_logo %}{{ pdf_logo }}{% else %}{% static 'clinic/brand/logo.webp' %}{% endif %}" alt="لوگوی دکتر گرامی"><span>آموزش، همراه درمان · <bdi>drgerami-md.ir</bdi></span><span class="page-number"></span></footer>
+<h1 class="patient-name">{{ patient_name }}</h1><p>راهنمای آموزشی و مراقبت در منزل{% if packet %} · ثبت: {{ packet.created_at|jalali_datetime }}{% endif %}</p>
+{% if draft %}<p class="draft-stamp">پیش‌نویس · نیازمند بازبینی و تأیید پزشک؛ برای تحویل به بیمار نیست.</p>{% endif %}
+{% for guide in guides %}{% include 'clinic/education/guide.html' %}{% endfor %}
+<p class="patient-note">این آموزش جایگزین برنامهٔ اختصاصی پزشک نیست. داروها را مطابق نسخه مصرف کنید و در صورت بروز علائم هشدار کمک بگیرید.</p>
+<section class="packet-qr"><img src="data:image/svg+xml;base64,{{ qr_data }}" alt="QR پرونده بیمار"><strong>پرونده بیمار</strong><small>مشاهده خلاصهٔ منتشرشده فقط برای بیمار و پزشک پس از ورود به حساب.</small></section>

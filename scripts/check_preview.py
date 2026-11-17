@@ -1,5 +1,6 @@
 """Check the public snapshot in Chromium against the actual preview Worker."""
 import os
+import xml.etree.ElementTree as ET
 import shutil
 import socket
 import subprocess
@@ -61,6 +62,56 @@ try:
         page.emulate_media(media='print')
         expect(page.get_by_role('status')).to_be_visible()
         page.pdf(path=str(output/'clinic-preview-print.pdf'),format='A4',print_background=True)
+        page.emulate_media(media='screen')
+        page.goto(base+'/clinic/advice/')
+        expect(page.locator('[data-advice-card]')).to_have_count(25)
+        page.locator('[name=q]').fill('رِفلـاکس GERD')
+        expect(page.locator('[data-advice-card]:visible')).to_have_count(1)
+        page.locator('[name=advice_ids]:visible').check()
+        page.locator('[name=q]').fill('فشار خون')
+        page.locator('[name=specialty]').select_option('cardiology')
+        expect(page.locator('[data-advice-card]:visible')).to_have_count(1)
+        page.locator('[name=advice_ids]:visible').check()
+        expect(page.locator('[data-selection-count]')).to_contain_text('۲')
+        assert page.locator('[name=patient]').is_disabled()
+        assert page.evaluate('document.documentElement.scrollWidth') <= 390
+        page.evaluate('window.scrollTo(0,0)')
+        page.screenshot(path=str(output/'education-library-mobile.png'),full_page=True)
+        page.locator('[data-demo-combine]').click()
+        expect(page.locator('.demo-print-stage .patient-guide')).to_have_count(2)
+        expect(page.locator('.demo-print-stage .patient-guide').first).to_contain_text('رفلاکس')
+        expect(page.locator('.demo-print-stage .patient-guide').nth(1)).to_contain_text('فشار خون')
+        expect(page.locator('.demo-print-stage .packet-qr strong')).to_have_text('پرونده بیمار')
+        page.evaluate('document.fonts.ready')
+        assert page.locator('.demo-print-stage .print-brand img').first.evaluate('(img)=>img.complete&&img.naturalWidth>0')
+        page.screenshot(path=str(output/'education-combined-mobile.png'),full_page=True)
+        page.emulate_media(media='print')
+        expect(page.locator('.demo-print-stage .draft-stamp')).to_be_visible()
+        page.pdf(path=str(output/'education-preview-print.pdf'),format='A4',print_background=True,prefer_css_page_size=True,display_header_footer=False)
+        bounds=output/'education-preview-bounds.html'
+        subprocess.run(['pdftotext','-bbox',str(output/'education-preview-print.pdf'),str(bounds)],check=True)
+        ns={'h':'http://www.w3.org/1999/xhtml'}
+        pdf_pages=ET.parse(bounds).findall('.//h:page',ns)
+        assert len(pdf_pages)>=2
+        for pdf_page in pdf_pages:
+            words=pdf_page.findall('h:word',ns)
+            brands=[w for w in words if 'drgerami-md.ir' in (w.text or '')]
+            assert len(brands)==2,[(w.text,w.attrib) for w in brands]
+            brands.sort(key=lambda w:float(w.get('yMin')))
+            assert float(brands[0].get('yMax'))<135
+            assert float(brands[1].get('yMin'))>float(brands[0].get('yMax'))+70
+            assert all(43<=float(w.get('xMin')) and float(w.get('xMax'))<=552 for w in words), 'PDF text clipped outside A4 content margins'
+        fonts=subprocess.check_output(['pdffonts',str(output/'education-preview-print.pdf')],text=True)
+        assert 'Vazirmatn' in fonts and 'Liberation' not in fonts,fonts
+        # A long bullet must wrap after table pagination rather than inherit
+        # nowrap from the app's administrative tables.
+        assert page.locator('.demo-print-stage li').first.evaluate('(e)=>getComputedStyle(e).whiteSpace')=='normal'
+        page.emulate_media(media='screen')
+        page.locator('.demo-print-stage .print-toolbar button').first.click()
+        expect(page.locator('[data-library]')).to_be_visible()
+        page.goto(base+'/clinic/patients/11111111-1111-4111-8111-111111111111/summary/')
+        expect(page.get_by_role('heading',name='خلاصه پرونده بیمار')).to_be_visible()
+        expect(page.get_by_role('status')).to_contain_text('پیش‌نمایش آزمایشی')
         assert not errors, errors
         assert not failures, failures
         assert all(method in ('GET','HEAD') and '/api/' not in url for method,url in requests), requests

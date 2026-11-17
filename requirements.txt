@@ -25,3 +25,13 @@ pyasn1-modules==0.4.2
 jdatetime==6.1.1
 jalali-core==1.0.0
 Pillow==13.0.0
+weasyprint==70.0
+pydyf==0.13.0
+tinycss2==1.5.1
+tinyhtml5==2.1.0
+cssselect2==0.10.1
+Pyphen==0.18.1
+fonttools==4.68.0
+brotli==1.2.1
+zopfli==0.4.3
+webencodings==0.6.1

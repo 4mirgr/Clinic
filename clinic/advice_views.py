@@ -29,7 +29,7 @@ class DeliveryConfirmation(forms.Form):
 
 
 def history_page(request, patient_id):
-    records = AdviceDelivery.objects.filter(patient_id=patient_id).select_related('created_by')
+    records = AdviceDelivery.objects.filter(patient_id=patient_id).select_related('created_by','packet')
     if role_for(request.user) == 'secretary':
         records = records.none()
     return Paginator(records, 20).get_page(request.GET.get('advice_page'))
