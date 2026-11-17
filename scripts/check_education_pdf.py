@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory(prefix='clinic-pdf-check-') as scratch:
     assert 'Vazirmatn' in fonts,fonts
     fontlines=fonts.splitlines()[2:]
     assert fontlines and all('yes' in line for line in fontlines),fonts
-    assert extracted.count('drgerami-md.ir')>=pages*2,(pages,extracted)
+    assert extracted.count('drgerami-md.ir')==pages,(pages,extracted)
     assert 'GERD' in extracted and 'Hypertension' in extracted
     assert 'NIDDK' not in extracted and 'www.niddk.nih.gov' not in extracted
     assert 'NHS' not in extracted

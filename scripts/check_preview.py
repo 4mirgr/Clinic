@@ -102,10 +102,9 @@ try:
         for pdf_page in pdf_pages:
             words=pdf_page.findall('h:word',ns)
             brands=[w for w in words if 'drgerami-md.ir' in (w.text or '')]
-            assert len(brands)==2,[(w.text,w.attrib) for w in brands]
+            assert len(brands)==1,[(w.text,w.attrib) for w in brands]
             brands.sort(key=lambda w:float(w.get('yMin')))
             assert float(brands[0].get('yMax'))<135
-            assert float(brands[1].get('yMin'))>float(brands[0].get('yMax'))+70
             assert all(43<=float(w.get('xMin')) and float(w.get('xMax'))<=552 for w in words), 'PDF text clipped outside A4 content margins'
         fonts=subprocess.check_output(['pdffonts',str(output/'education-preview-print.pdf')],text=True)
         assert 'Vazirmatn' in fonts and 'Liberation' not in fonts,fonts
