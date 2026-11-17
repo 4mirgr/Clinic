@@ -21,4 +21,4 @@
 ## Task 4 — Read-only preview and delivery
 - [x] Demonstrate category/tag search, selection and combined sample printing; all clinical writes remain blocked and all records synthetic.
 - [x] Run full Django/browser/Node, PostgreSQL and relevant PDF/build checks; independent review, record findings/fixes.
-- [ ] Update handoff, commit/push, publish synthetic preview with pinned SHA and verify live links.
+- [x] Update handoff, commit/push, publish synthetic preview with pinned SHA and verify live links.
