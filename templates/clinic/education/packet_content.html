@@ -1,4 +1,5 @@
 {% load static clinic_dates %}
+{% include 'clinic/education/watermark.html' %}
 <header class="print-brand"><img src="{% if pdf_logo %}{{ pdf_logo }}{% else %}{% static 'clinic/brand/logo.webp' %}{% endif %}" alt="لوگوی دکتر گرامی"><span>دکتر امیرهوشنگ گرامی · متخصص داخلی<br><bdi>drgerami-md.ir</bdi></span></header>
 
 <h1 class="patient-name">{{ patient_name }}</h1><p>راهنمای آموزشی و مراقبت در منزل{% if packet %} · ثبت: {{ packet.created_at|jalali_datetime }}{% endif %}</p>

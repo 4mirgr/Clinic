@@ -9,7 +9,7 @@ window.addEventListener('beforeprint', () => {
    const head=table.createTHead(),body=table.createTBody();
    head.insertRow().insertCell().append(header);
    const cell=body.insertRow().insertCell();
-   [...sheet.childNodes].filter(node=>!(node.nodeType===1&&node.classList.contains('print-toolbar'))).forEach(node=>cell.append(node));
+   [...sheet.childNodes].filter(node=>!(node.nodeType===1&&(node.classList.contains('print-toolbar')||node.classList.contains('pdf-watermark')))).forEach(node=>cell.append(node));
    sheet.append(table);
  });
 });

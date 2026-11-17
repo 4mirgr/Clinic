@@ -11,7 +11,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','static/clinic/education.css','static/clinic/print-pager.js'))).hexdigest()[:12]
+ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','deploy/preview/preview.css','static/clinic/education.css','static/clinic/print-pager.js'))).hexdigest()[:12]
 sys.path.insert(0, str(ROOT))
 
 
@@ -62,7 +62,7 @@ class ReadOnlyHTML(HTMLParser):
         if self.skip_script:
             return
         if tag == 'head':
-            self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
+            self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css?v={ASSET_VERSION}"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
         if tag == 'form':
             self.theme_form = False
         self.parts.append(f'</{tag}>')
