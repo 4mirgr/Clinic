@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api
+from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views
 
 urlpatterns = [
     path('dash/api/portal/documents/<uuid:pk>/download', portal_api.document_download),
@@ -29,6 +29,9 @@ urlpatterns = [
     path('dash/patients/new/', views.patient_new, name='patient_new'),
     path('dash/patients/<uuid:pk>/', views.patient_detail, name='patient_detail'),
     path('dash/patients/<uuid:pk>/edit/', views.patient_edit, name='patient_edit'),
+    path('dash/patients/<uuid:pk>/advice/', advice_views.select_advice, name='patient_advice_select'),
+    path('dash/patients/<uuid:pk>/advice/<uuid:advice_pk>/', advice_views.confirm_advice, name='patient_advice_confirm'),
+    path('dash/advice-records/<uuid:pk>/', advice_views.delivery_print, name='advice_delivery_print'),
     path('dash/patients/<uuid:pk>/visits/new/', views.visit_new, name='visit_new'),
     path('dash/patients/<uuid:pk>/documents/new/', views.document_new, name='document_new'),
     path('dash/documents/<uuid:pk>/download/', views.document_download, name='document_download'),

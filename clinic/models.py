@@ -2,6 +2,7 @@ import uuid
 from pathlib import Path
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 
@@ -89,6 +90,32 @@ class AuditEvent(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class AdviceDelivery(models.Model):
+    """A recorded copy, independent of subsequent edits to the library."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name='advice_deliveries')
+    advice = models.ForeignKey(Advice, on_delete=models.PROTECT, related_name='deliveries')
+    title = models.CharField(max_length=200)
+    body = models.TextField(max_length=30000)
+    tags = models.CharField(max_length=300, blank=True)
+    source = models.TextField(max_length=4000, blank=True)
+    advice_updated_at = models.DateTimeField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    request_key = models.UUIDField(unique=True, editable=False)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+
+    def get_absolute_url(self):
+        return reverse('advice_delivery_print', args=[self.pk])
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError('نسخه ثبت‌شده قابل بازنویسی نیست؛ توصیه تازه‌ای ثبت کنید.')
+        return super().save(*args, **kwargs)
 
 
 # Register related calendar models without bloating the clinical model module.

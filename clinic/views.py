@@ -88,7 +88,8 @@ def consented_activity(patient):
 def patient_detail(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
     audit(request,'patient.view',pk)
-    return render(request,'clinic/patient_detail.html',{'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm(),'portal_profile':getattr(patient,'portal_account',None),'portal_activity':consented_activity(patient)})
+    from .advice_views import history_page
+    return render(request,'clinic/patient_detail.html',{'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm(),'portal_profile':getattr(patient,'portal_account',None),'portal_activity':consented_activity(patient),'advice_deliveries':history_page(request, patient.pk)})
 
 
 @manager_required

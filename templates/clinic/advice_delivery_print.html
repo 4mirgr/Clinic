@@ -1,0 +1,15 @@
+{% load static clinic_dates %}
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="{{ interface_theme }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="{% static 'clinic/favicon.svg' %}" type="image/svg+xml"><title>{{ delivery.title }} | {{ clinic_name }}</title><script src="{% static 'clinic/theme-init.js' %}"></script><link rel="stylesheet" href="{% static 'clinic/app.css' %}"><script src="{% static 'clinic/app.js' %}" defer></script></head>
+<body class="print-body">
+<nav class="print-toolbar">{% if manager %}<a class="button ghost" href="{{ delivery.patient.get_absolute_url }}#advice-history">→ پرونده بیمار</a>{% else %}<a class="button ghost" href="{% url 'patient_portal' %}#advice-history">→ توصیه‌های من</a>{% endif %}<button type="button" class="button primary" data-print>چاپ / ذخیره PDF</button></nav>
+<main class="brochure">
+  <header class="brochure-header"><div><h2>{{ clinic_name }}</h2><p>{{ clinic_title }}</p></div><span>راهنمای آموزشی بیمار</span></header>
+  <div class="brochure-heading"><span class="eyebrow">{{ delivery.tags }}</span><h1>{{ delivery.title }}</h1><p>برای {{ delivery.patient.full_name }}</p><small>ثبت در پرونده: {{ delivery.created_at|jalali_datetime }} · بازبینی متن: {{ delivery.advice_updated_at|jalali_datetime }}</small></div>
+  <article class="brochure-content">{{ delivery.body|linebreaks }}</article>
+  {% if delivery.source %}<div class="brochure-source"><strong>منابع و توضیحات بازبینی</strong><p>{{ delivery.source|linebreaksbr }}</p></div>{% endif %}
+  <footer class="brochure-footer"><div><strong>آموزش، همراه درمان</strong><p>این راهنما جایگزین ارزیابی و دستور اختصاصی پزشک نیست.</p><a href="{{ clinic_site }}" dir="ltr">drgerami-md.ir</a></div><div class="qr-block"><img src="data:image/svg+xml;base64,{{ qr_data }}" alt="QR وب‌سایت پزشک" width="100" height="100"><small>وب‌سایت پزشک؛ این QR حاوی پرونده بیمار نیست.</small></div></footer>
+</main>
+<p class="print-help">نسخه ثبت‌شده در پرونده · برای PDF، در پنجره چاپ «Save as PDF» را انتخاب کنید.</p>
+</body></html>

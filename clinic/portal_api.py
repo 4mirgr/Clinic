@@ -518,9 +518,10 @@ def endpoint(request, route):
 @require_GET
 def patient_home(request):
     try:
-        account_for(request, True)
+        account = account_for(request, True)
     except PortalError as error:
         if error.status == 401:
             return redirect('/account/?next=%2Fdash%2Fportal%2F')
         return answer({'error': error.code}, error.status)
-    return render(request, 'clinic/portal.html')
+    from .advice_views import history_page
+    return render(request, 'clinic/portal.html', {'advice_deliveries': history_page(request, account.patient_id)})

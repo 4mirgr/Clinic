@@ -1,0 +1,22 @@
+{% extends 'clinic/base.html' %}
+{% block title %}انتخاب توصیه برای بیمار{% endblock %}
+{% block crumb %}آموزش بیمار{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ patient.get_absolute_url }}">→ پرونده بیمار</a>
+<div class="page-heading"><div><h1>انتخاب توصیه برای {{ patient.full_name }}</h1><p>فقط متن‌های تأییدشده نمایش داده می‌شوند. پیش از ثبت، متن کامل را بازبینی کنید.</p></div></div>
+<section class="card">
+  <form class="search-form" method="get" role="search">
+    <label class="sr-only" for="advice-search">جست‌وجوی توصیه تأییدشده</label>
+    <input id="advice-search" name="q" value="{{ q }}" placeholder="جست‌وجوی عنوان، متن یا برچسب…" maxlength="200">
+    <button class="button primary" type="submit">جست‌وجو</button>
+  </form>
+  <div class="advice-grid">
+    {% for advice in page %}
+    <article class="advice-card"><span class="badge">تأییدشده توسط پزشک</span><h2>{{ advice.title }}</h2><p>{{ advice.body|truncatechars:180 }}</p><small>{{ advice.tags }}</small><div class="advice-actions"><a class="text-link" href="{% url 'patient_advice_confirm' patient.pk advice.pk %}">انتخاب و بازبینی ←</a></div></article>
+    {% empty %}
+    <div class="empty-state"><h2>توصیه تأییدشده‌ای پیدا نشد</h2><p>متن مورد نظر را در کتابخانه ثبت و پس از بازبینی تأیید کنید.</p><a class="button secondary" href="{% url 'advice' %}">کتابخانه توصیه‌ها</a></div>
+    {% endfor %}
+  </div>
+  {% include 'clinic/pagination.html' %}
+</section>
+{% endblock %}
