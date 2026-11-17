@@ -265,7 +265,7 @@ class PatientAdviceAcceptance(LiveServerTestCase):
             page.get_by_role('button', name='ورود به پنل').click()
             page.wait_for_url('**/dash/')
             page.goto(self.live_server_url + patient.get_absolute_url())
-            page.get_by_role('link', name='افزودن توصیه برای بیمار').click()
+            page.get_by_role('link', name='انتخاب تک‌توصیهٔ تأییدشده').click()
             page.get_by_label('جست‌وجوی توصیه تأییدشده').fill('نمونه')
             page.get_by_role('button', name='جست‌وجو', exact=True).click()
             page.get_by_role('link', name='انتخاب و بازبینی').click()

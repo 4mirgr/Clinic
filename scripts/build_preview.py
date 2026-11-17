@@ -1,6 +1,7 @@
 """Render an isolated synthetic Django dataset as a public, read-only preview."""
 import argparse
 import html
+import hashlib
 import json
 import os
 import sys
@@ -10,6 +11,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','static/clinic/education.css','static/clinic/print-pager.js'))).hexdigest()[:12]
 sys.path.insert(0, str(ROOT))
 
 
@@ -44,6 +46,8 @@ class ReadOnlyHTML(HTMLParser):
             attributes['disabled'] = ''
         if tag == 'option' and attributes.get('value') == '11111111-1111-4111-8111-111111111111':
             attributes['selected'] = ''
+        if attributes.get('href') == '/clinic/static/clinic/education.css':
+            attributes['href'] += '?v='+ASSET_VERSION
         if attributes.get('href') == '/account/':
             attributes['href'] = '/clinic/login/'
         rendered = ''.join(f' {key}' if value is None else f' {key}="{html.escape(value, quote=True)}"' for key, value in attributes.items())
@@ -58,7 +62,7 @@ class ReadOnlyHTML(HTMLParser):
         if self.skip_script:
             return
         if tag == 'head':
-            self.parts.append('<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css"><script src="/clinic/static/clinic/print-pager.js" defer></script><script src="/clinic/preview.js" defer></script>')
+            self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
         if tag == 'form':
             self.theme_form = False
         self.parts.append(f'</{tag}>')
@@ -123,14 +127,15 @@ def build(output):
         manifest = {}
 
         def capture(route, filename):
-            response = client.get(route)
+            source_route='/dash/advice/?patient='+str(patient.pk) if route==patient.get_absolute_url()+'advice/' else route
+            response = client.get(source_route)
             if response.status_code != 200:
                 raise RuntimeError(f'Cannot export {route}: HTTP {response.status_code}')
             parser = ReadOnlyHTML()
             parser.feed(response.content.decode().replace('/dash/', '/clinic/'))
-            rendered = ''.join(parser.parts)
-            if route == '/dash/advice/':
-                rendered=rendered.replace('<section class="card education-library"', '<p><a href="/clinic/advice/sample.pdf">دریافت نمونه PDF پنج‌صفحه‌ای با وزیرمتن و QR آزمایشی</a></p><section class="card education-library"')
+            rendered = ''.join(parser.parts).replace('انتخاب تک‌توصیهٔ تأییدشده','بانک توصیه‌ها و چاپ')
+            if route == '/dash/advice/' or route==patient.get_absolute_url()+'advice/':
+                rendered=rendered.replace('<section class="card education-library"', '<p><a href="/clinic/advice/sample.pdf">دریافت نمونه PDF با وزیرمتن و QR آزمایشی</a></p><section class="card education-library"')
                 rendered=rendered.replace('<button class="button primary" type="submit" disabled="">بازبینی و آماده‌سازی چاپ</button>','<button class="button primary" type="button" data-demo-combine>ساخت پیش‌نمایش چاپ</button>')
             (output / filename).write_text('\n'.join(line.rstrip() for line in rendered.splitlines())+'\n')
             manifest[route.replace('/dash/', '/clinic/')] = {'path':'deploy/preview/public/'+filename, 'type':'text/html; charset=utf-8'}

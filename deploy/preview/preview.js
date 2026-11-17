@@ -41,7 +41,7 @@ document.querySelector('[data-print]')?.addEventListener('click', async () => {
    const stage=document.createElement('main');stage.className='demo-print-stage packet-sheet';stage.append(document.querySelector('#demo-packet-shell').content.cloneNode(true));
    const controls=document.createElement('nav');controls.className='print-toolbar';
    const back=document.createElement('button');back.type='button';back.textContent='بازگشت به انتخاب توصیه‌ها';back.onclick=()=>{stage.remove();document.body.classList.remove('printing-demo');document.querySelector('.workspace').hidden=false};
-   const print=document.createElement('button');print.type='button';print.textContent='چاپ / ذخیره PDF';print.onclick=async()=>{await document.fonts.ready;await Promise.all([...stage.images].map(i=>i.decode().catch(()=>{})));window.print()};
+   const print=document.createElement('button');print.type='button';print.textContent='چاپ / ذخیره PDF';print.onclick=async()=>{await document.fonts.ready;await Promise.all([...stage.querySelectorAll('img')].map(i=>i.decode().catch(()=>{})));window.print()};
    controls.append(back,print);stage.prepend(controls);
    selected.forEach((input,id)=>stage.querySelector('[data-demo-guides]').append(root.querySelector(`[data-guide-template="${id}"]`).content.cloneNode(true)));
    document.body.append(stage);document.body.classList.add('printing-demo');document.querySelector('.workspace').hidden=true;window.scrollTo(0,0);await document.fonts.ready;

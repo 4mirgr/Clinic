@@ -224,6 +224,21 @@ class EducationLibraryTests(TestCase):
         self.assertEqual(self.client.post('/dash/advice/bundles/confirm/',{'review_token':forged,'reviewed':'on'}).status_code,409)
         self.assertEqual(packet.deliveries.count(),2)
 
+    def test_patient_entry_opens_full_catalog_and_final_packet_omits_editorial_metadata(self):
+        self.load()
+        page=self.client.get(self.patient.get_absolute_url())
+        self.assertRegex(page.content.decode(),r'href="/dash/advice/\?patient='+str(self.patient.pk)+r'">افزودن توصیه برای بیمار</a>')
+        guide=Advice.objects.get(catalog_key='gerd')
+        token=self.prepare([guide.pk])
+        review=self.client.post('/dash/advice/bundles/prepare/',{'patient':str(self.patient.pk),'advice_ids':[str(guide.pk)]})
+        self.assertContains(review,'منابع و بازبینی')
+        packet=self.record(token)
+        final=self.client.get(packet.get_absolute_url())
+        self.assertNotContains(final,'منابع و بازبینی')
+        self.assertNotContains(final,'niddk.nih.gov')
+        self.assertNotContains(final,'draft-stamp')
+        self.assertIn('niddk.nih.gov',packet.deliveries.get().source)
+
 
 from concurrent.futures import ThreadPoolExecutor
 import threading

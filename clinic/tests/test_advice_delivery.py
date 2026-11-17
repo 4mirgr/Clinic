@@ -71,8 +71,10 @@ class AdviceDeliveryTests(TestCase):
         self.advice.is_approved = False
         self.advice.save()
         page = self.client.get(delivery.get_absolute_url())
-        for original in ['توصیه آزمایشی کبد', 'نسخه اول', 'منبع اول', 'آزمایشی']:
+        for original in ['توصیه آزمایشی کبد', 'نسخه اول', 'آزمایشی']:
             self.assertContains(page, original)
+        self.assertEqual(delivery.source, 'منبع اول')
+        self.assertNotContains(page, 'منبع اول')
         self.assertNotContains(page, 'نسخه دوم')
         self.assertContains(page, '&lt;script&gt;unsafe()&lt;/script&gt;')
         self.assertNotContains(page, '<script>unsafe()</script>')

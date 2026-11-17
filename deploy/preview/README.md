@@ -2,7 +2,7 @@
 
 مالک صریحاً نمایش آزمایشی صفحات در `https://drgerami-md.ir/clinic` را انتخاب کرده است. این نسخه از قالب‌های واقعی Django ساخته می‌شود؛ داده‌ها کاملاً مصنوعی‌اند و حساب عمومی، رمز عبور، پرونده واقعی یا بانک زنده ندارد. تمام صفحات برچسب پیش‌نمایش دارند و ثبت فرم/آپلود در HTML غیرفعال و در Worker نیز رد می‌شود. چاپ هم برچسب نمایشی را حفظ می‌کند.
 
-انتشار در ۲۰۲۶-۱۱-۱۷ تأیید شد: [پیشخوان](https://drgerami-md.ir/clinic/) و [نمای بیمار](https://drgerami-md.ir/clinic/portal/) هر دو HTTP 200 داشتند. Worker از فایل‌های commit `5d4fa8099b435df7d0a5bb9dbd380aefa1b3f68f` استفاده می‌کند؛ تغییر main به‌تنهایی پیش‌نمایش را عوض نمی‌کند. برای نسخه جدید باید SHA ثبت‌شده در Worker نیز پس از آزمون به‌روز شود. `fetch` در Workers باید `redirect: 'manual'` داشته باشد و پاسخ‌های غیرموفق، از جمله redirect منبع، رد شوند.
+انتشار در ۲۰۲۶-۱۱-۱۷ تأیید شد: [پیشخوان](https://drgerami-md.ir/clinic/) و [نمای بیمار](https://drgerami-md.ir/clinic/portal/) هر دو HTTP 200 داشتند. SHA ثابت نسخهٔ جاری در `PROJECT_HANDOFF.md` ثبت می‌شود؛ تغییر main به‌تنهایی پیش‌نمایش را عوض نمی‌کند. برای نسخه جدید باید SHA ثبت‌شده در Worker نیز پس از آزمون به‌روز شود. `fetch` در Workers باید `redirect: 'manual'` داشته باشد و پاسخ‌های غیرموفق، از جمله redirect منبع، رد شوند.
 
 ## ساخت و بررسی
 
@@ -41,3 +41,5 @@ drgerami-md.ir/clinic/*
 - https://developers.cloudflare.com/containers/platform/pricing/
 
 Education preview adds 24 source-backed drafts with local bilingual/category filtering and ordered checkbox selection. Only `q`, `specialty`, and `advice_ids` controls are enabled; the patient is a fixed synthetic record. `preview.js` builds a print DOM locally; it never submits or stores clinical data. All POST routes remain rejected by the Worker. Full-text/edit pages are synthetic exports; edit inputs stay disabled. The summary URL and QR lead to a clearly labeled synthetic page. A finite allowlisted `/clinic/advice/sample.pdf` contains a generated five-page draft, never a real record. Native Django summary/packet readers retain authentication and current patient ownership checks.
+
+Stage 9 removes editorial sources and the large draft panel from final patient output, retains sources in physician review/storage, fixes the print button to await actual image elements, and directs synthetic patient advice entry to the complete local catalog. Script/style URLs carry a content-derived version query to refresh previously cached assets.

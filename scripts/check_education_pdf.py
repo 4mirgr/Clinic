@@ -26,7 +26,7 @@ with tempfile.TemporaryDirectory(prefix='clinic-pdf-check-') as scratch:
     load_defaults(doctor)
     patient=Patient.objects.create(id='11111111-1111-4111-8111-111111111111',first_name='بیمار',last_name='آزمایشی',phone='00000000000')
     guides=[decorate(Advice.objects.get(catalog_key=key)) for key in ['gerd','hypertension','diabetes','ckd']]
-    response=pdf_response({'patient_name':patient.full_name,'guides':guides,'qr_data':qr_for(patient),'draft':True})
+    response=pdf_response({'patient_name':patient.full_name,'guides':guides,'qr_data':qr_for(patient),'sample':True})
     output=ROOT/'test-results';output.mkdir(exist_ok=True)
     path=output/'education-demo.pdf';path.write_bytes(response.content)
     fonts=subprocess.check_output(['pdffonts',str(path)],text=True)
@@ -39,6 +39,8 @@ with tempfile.TemporaryDirectory(prefix='clinic-pdf-check-') as scratch:
     assert fontlines and all('yes' in line for line in fontlines),fonts
     assert extracted.count('drgerami-md.ir')>=pages*2,(pages,extracted)
     assert 'GERD' in extracted and 'Hypertension' in extracted
+    assert 'NIDDK' not in extracted and 'www.niddk.nih.gov' not in extracted
+    assert 'NHS' not in extracted
     # Poppler emits bidi presentation order; don't equate it to Unicode source order.
     from PIL import Image
     import zxingcpp
