@@ -1,5 +1,7 @@
 # Project continuity
 
+Current preview deployment and live identity checks are recorded at the top of `PROJECT_HANDOFF.md`; older ungated-preview statements are historical. Preserve `global_fetch_strictly_public` for the same-zone session front door, existing observability and only the two Clinic routes. The public website toolbar reference does not authorize migrating Django or changing native navigation.
+
 Latest 2026-11-19 continuation: owner keeps Clinic synthetic/read-only and without paid hosting, but explicitly requests shared website login and role-aware doctor/patient entry at `/clinic/` and `/clinic/portal/`. The optional preview identity wrapper may verify the website session and gate HTML; it must not activate medical writes, uploads, native hosting or patient linking. Native `SHARED_AUTH_ENABLED` remains off until private hosting is authorized and ready.
 
 Read `PROJECT_HANDOFF.md` before changing this project. It is the maintained handoff for the owner and future AI/developers, not a substitute for reading current code.
