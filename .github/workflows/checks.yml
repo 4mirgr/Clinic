@@ -61,6 +61,6 @@ jobs:
         run: |
           python scripts/check_browser.py
           node --test deploy/cloudflare/worker.test.mjs
-          node --test deploy/preview/worker.test.mjs
+          node --test deploy/preview/worker.test.mjs deploy/preview/account-entry.test.mjs
           python scripts/check_preview.py
           python scripts/check_education_pdf.py
