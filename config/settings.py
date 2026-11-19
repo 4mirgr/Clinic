@@ -99,3 +99,9 @@ CSRF_FAILURE_VIEW = 'clinic.portal_api.csrf_failure'
 PASSWORD_RESET_TIMEOUT = 900
 
 CLINIC_PUBLIC_URL = os.environ.get('CLINIC_PUBLIC_URL', CLINIC_SITE+'/dash').rstrip('/')
+
+SITE_ACCOUNT_URL = os.environ.get('SITE_ACCOUNT_URL','/dash/account/')
+
+GOOGLE_AUTH_CLIENT_ID = os.getenv('GOOGLE_AUTH_CLIENT_ID','')
+GOOGLE_AUTH_CLIENT_SECRET = os.getenv('GOOGLE_AUTH_CLIENT_SECRET','')
+GOOGLE_AUTH_REDIRECT_URI = os.getenv('GOOGLE_AUTH_REDIRECT_URI',CLINIC_SITE+'/dash/account/google/callback/')

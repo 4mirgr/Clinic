@@ -44,6 +44,18 @@ class Patient(models.Model):
 class Visit(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name='visits')
     note = models.TextField('شرح ویزیت و برنامه پیگیری', max_length=20000)
+    mode = models.CharField('نوع ویزیت', max_length=12, choices=[('in_person','حضوری'),('online','آنلاین')], default='in_person')
+    chief_complaint = models.CharField('علت مراجعه', max_length=300, blank=True)
+    assessment = models.TextField('ارزیابی و تشخیص پزشک', max_length=10000, blank=True)
+    plan = models.TextField('برنامه درمان و پیگیری', max_length=10000, blank=True)
+    follow_up_on = models.DateField('تاریخ پیگیری', null=True, blank=True)
+    follow_up_done = models.BooleanField(default=False)
+    systolic = models.PositiveSmallIntegerField('فشار سیستولیک (mmHg)', null=True, blank=True)
+    diastolic = models.PositiveSmallIntegerField('فشار دیاستولیک (mmHg)', null=True, blank=True)
+    pulse = models.PositiveSmallIntegerField('نبض (در دقیقه)', null=True, blank=True)
+    weight = models.DecimalField('وزن (کیلوگرم)', max_digits=5, decimal_places=1, null=True, blank=True)
+    temperature = models.DecimalField('دما (سانتی‌گراد)', max_digits=3, decimal_places=1, null=True, blank=True)
+    oxygen_saturation = models.PositiveSmallIntegerField('اشباع اکسیژن (%)', null=True, blank=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -143,7 +155,7 @@ class AdviceDelivery(models.Model):
 
 # Register related calendar models without bloating the clinical model module.
 from .calendar_models import Appointment, AvailabilityOverride, CalendarConnection, ScheduleSettings  # noqa: E402,F401
-from .portal_models import PortalAccount, SiteActivity, PortalRecoveryRequest  # noqa: E402,F401
+from .portal_models import PortalAccount, SiteActivity, PortalRecoveryRequest, PatientIntakeSubmission, GoogleIdentity  # noqa: E402,F401
 
 
 class AdvicePacket(models.Model):
@@ -175,3 +187,36 @@ class PatientSummary(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     published_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, related_name='+')
     published_at = models.DateTimeField(null=True)
+
+
+class PatientRecordChange(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name='record_changes')
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    changes = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at','-pk']
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError('تاریخچه قابل بازنویسی نیست.')
+        return super().save(*args, **kwargs)
+
+
+class PrescriptionReference(models.Model):
+    PROVIDERS = [('drnext','دکترنکست'),('tamin','تأمین اجتماعی'),('ihio','بیمه سلامت')]
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name='prescription_references')
+    provider = models.CharField('سامانه نسخه', max_length=12, choices=PROVIDERS)
+    reference = models.CharField('کد رهگیری نسخه', max_length=100)
+    note = models.TextField('توضیح پزشک', max_length=3000, blank=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at','-pk']
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError('نسخه ثبت‌شده قابل بازنویسی نیست.')
+        return super().save(*args, **kwargs)

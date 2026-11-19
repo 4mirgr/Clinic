@@ -2,7 +2,8 @@ import re
 from pathlib import Path
 
 from django import forms
-from .models import Advice, Document, Patient, Visit
+from .models import Advice, Document, Patient, Visit, PrescriptionReference
+from .jalali import JalaliDateField
 
 
 TRANSLATION = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩يك', '01234567890123456789یک')
@@ -44,10 +45,31 @@ class PatientForm(forms.ModelForm):
 
 
 class VisitForm(forms.ModelForm):
+    mode = forms.ChoiceField(label='نوع ویزیت', choices=Visit._meta.get_field('mode').choices, required=False, initial='in_person')
+    follow_up_on = JalaliDateField(label='تاریخ پیگیری (هجری شمسی)', required=False)
     class Meta:
         model = Visit
-        fields = ['note']
-        widgets = {'note':forms.Textarea(attrs={'rows':5})}
+        fields = ['mode','chief_complaint','note','assessment','plan','systolic','diastolic','pulse','weight','temperature','oxygen_saturation','follow_up_on']
+        widgets = {key:forms.Textarea(attrs={'rows':3}) for key in ['note','assessment','plan']}
+
+    def clean_mode(self):
+        return self.cleaned_data.get('mode') or 'in_person'
+
+    def clean(self):
+        data=super().clean()
+        ranges={'systolic':(30,300),'diastolic':(10,200),'pulse':(10,300),'weight':(1,500),'temperature':(25,45),'oxygen_saturation':(1,100)}
+        for key,(low,high) in ranges.items():
+            value=data.get(key)
+            if value is not None and not low<=value<=high:
+                self.add_error(key,f'مقدار باید بین {low} و {high} باشد؛ اگر اندازه‌گیری نشده خالی بگذارید.')
+        return data
+
+
+class PrescriptionReferenceForm(forms.ModelForm):
+    class Meta:
+        model=PrescriptionReference
+        fields=['patient','provider','reference','note']
+        widgets={'note':forms.Textarea(attrs={'rows':3})}
 
 
 class DocumentForm(forms.ModelForm):

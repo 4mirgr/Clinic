@@ -27,7 +27,8 @@ from django.views.decorators.http import require_GET
 
 from .access import role_for
 from .forms import DocumentForm, PatientForm, normalize
-from .models import AuditEvent, Document, LoginThrottle, Patient, PortalAccount, PortalRecoveryRequest, SiteActivity
+from .intake import INTAKE_FIELDS
+from .models import AuditEvent, Document, LoginThrottle, Patient, PortalAccount, PortalRecoveryRequest, SiteActivity, PatientIntakeSubmission
 
 
 class PortalError(Exception):
@@ -211,16 +212,23 @@ def profile_data(account):
     return {'display_name': account.user.get_full_name(), 'first_name': patient.first_name if patient else '',
             'last_name': patient.last_name if patient else '', 'phone': patient.phone if patient else account.phone,
             'reported_history': account.reported_history, 'reported_medications': account.reported_medications,
-            'reported_allergies': account.reported_allergies, 'profile_complete': bool(patient)}
+            'reported_allergies': account.reported_allergies, **{key:getattr(account,key) for key,label,maximum in INTAKE_FIELDS}, 'profile_complete': bool(patient)}
+
+
+def profile_envelope(account):
+    latest=account.intake_submissions.first()
+    return {'profile':profile_data(account),'intake_saved_at':latest.created_at.isoformat() if latest else None}
 
 
 def profile(request):
     account = account_for(request, True)
     if request.method == 'GET':
-        return {'profile': profile_data(account)}
-    data = data_body(request, ['display_name', 'phone', 'first_name', 'last_name', 'reported_history', 'reported_medications', 'reported_allergies'])
+        return profile_envelope(account)
+    data = data_body(request, ['display_name', 'phone', 'first_name', 'last_name', *[key for key,label,maximum in INTAKE_FIELDS]])
     with transaction.atomic():
         account = locked_account(request, account)
+        previous = account.intake_submissions.first()
+        baseline = profile_data(account) if account.patient_id and previous is None else None
         if account.patient_id and 'phone' not in data:
             account.phone = account.patient.phone
         name = text(data.get('display_name', account.user.get_full_name()), 100, 1)
@@ -244,13 +252,22 @@ def profile(request):
         elif first and last and account.phone:
             # Never match an existing record using a self-declared phone/email/ID.
             account.patient = Patient.objects.create(first_name=normalize(first), last_name=normalize(last), phone=account.phone)
-        for key, maximum in [('reported_history', 10000), ('reported_medications', 5000), ('reported_allergies', 5000)]:
+        for key,label,maximum in INTAKE_FIELDS:
             if key in data:
                 setattr(account, key, text(data[key], maximum))
         account.save()
+        account.refresh_from_db()
+        if account.patient_id:
+            snapshot=profile_data(account)
+            # Preserve reported medical text saved before revision history existed.
+            # Its timestamp records capture now, not an invented original submission.
+            if baseline and baseline != snapshot and any(baseline[key] for key,label,maximum in INTAKE_FIELDS):
+                PatientIntakeSubmission.objects.create(account=account,patient_id=account.patient_id,data=baseline)
+            if previous is None or previous.data!=snapshot:
+                PatientIntakeSubmission.objects.create(account=account,patient_id=account.patient_id,data=snapshot)
         AuditEvent.objects.create(actor=request.user, action='portal.profile', target=str(account.pk))
     account.refresh_from_db()
-    return {'profile': profile_data(account), 'user': safe_user(account.user, account)}
+    return {**profile_envelope(account),'user':safe_user(account.user,account)}
 
 
 def password_change(request):
@@ -523,8 +540,10 @@ def patient_home(request):
         if error.status == 401:
             from .views_auth import safe_next
             from urllib.parse import urlencode
-            return redirect('/account/?'+urlencode({'next':safe_next(request) or '/dash/portal/'}))
+            from django.conf import settings
+            return redirect(settings.SITE_ACCOUNT_URL+'?'+urlencode({'next':safe_next(request) or '/dash/portal/'}))
         return answer({'error': error.code}, error.status)
     from .advice_views import history_page
     clinical = role_for(request.user) != 'secretary'
-    return render(request, 'clinic/portal.html', {'advice_deliveries': history_page(request, account.patient_id), 'advice_packets': account.patient.advice_packets.all()[:20] if account.patient_id and clinical else [], 'linked_patient':account.patient if account.patient_id and clinical else None})
+    from .workspace import intake_context
+    return render(request, 'clinic/portal.html', {**intake_context(account),'portal_account':account,'advice_deliveries': history_page(request, account.patient_id), 'advice_packets': account.patient.advice_packets.all()[:20] if account.patient_id and clinical else [], 'linked_patient':account.patient if account.patient_id and clinical else None})

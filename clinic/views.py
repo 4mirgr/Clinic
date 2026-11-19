@@ -14,7 +14,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from .access import manager_required, role_for
 from .forms import AdviceForm, DocumentForm, PatientForm, VisitForm, normalize
-from .models import Advice, AuditEvent, Document, Patient
+from .models import Advice, AuditEvent, Document, Patient, PatientRecordChange
 
 
 def audit(request, action, target=''):
@@ -33,19 +33,18 @@ def dashboard(request):
         raise PermissionDenied
     if role == 'secretary':
         return render(request, 'clinic/secretary.html', {'section':'dashboard'})
-    return render(request, 'clinic/dashboard.html', {
-        'section':'dashboard','patient_count':Patient.objects.count(),
-        'document_count':Document.objects.count(), 'advice_count':Advice.objects.count(),
-        'recent_patients':Patient.objects.all()[:5],
-        'recent_events':AuditEvent.objects.select_related('actor')[:5],
-    })
+    from .workspace import doctor_dashboard
+    return render(request,'clinic/dashboard.html',doctor_dashboard())
 
 
 @manager_required
 @require_GET
 def patients(request):
     q = normalize(request.GET.get('q','')[:200])
-    records = Patient.objects.all()
+    from django.db.models import Count, Max
+    records = Patient.objects.annotate(last_visit=Max('visits__created_at'),visit_count=Count('visits')).order_by('-created_at','pk')
+    if request.GET.get('visited')=='1':
+        records=records.filter(visit_count__gt=0)
     if q:
         phone = q.replace(' ','').replace('-','')
         if phone.startswith('+98'):
@@ -57,7 +56,7 @@ def patients(request):
         for token in q.split():
             names &= Q(first_name__icontains=token) | Q(last_name__icontains=token)
         records = records.filter(names | Q(national_id__icontains=q) | Q(phone__icontains=phone))
-    return render(request,'clinic/patients.html', {'section':'patients','q':q,'page':Paginator(records,20).get_page(request.GET.get('page'))})
+    return render(request,'clinic/patients.html', {'section':'patients','q':q,'visited':request.GET.get('visited')=='1','page':Paginator(records,20).get_page(request.GET.get('page'))})
 
 
 @manager_required
@@ -89,20 +88,37 @@ def patient_detail(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
     audit(request,'patient.view',pk)
     from .advice_views import history_page
-    return render(request,'clinic/patient_detail.html',{'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm(),'portal_profile':getattr(patient,'portal_account',None),'portal_activity':consented_activity(patient),'advice_deliveries':history_page(request, patient.pk),'advice_packets':patient.advice_packets.all()[:20]})
+    from .workspace import intake_context
+    from .intake import INTAKE_FIELDS
+    changes=[]
+    change_page=Paginator(patient.record_changes.select_related('actor'),20).get_page(request.GET.get('change_page'))
+    for entry in change_page:
+        entry.rows=[(str(Patient._meta.get_field(key).verbose_name),pair.get('before',''),pair.get('after','')) for key,pair in entry.changes.items()]
+        changes.append(entry)
+    intake_page=Paginator(patient.intake_submissions.select_related('account__user'),5).get_page(request.GET.get('intake_page'))
+    for entry in intake_page:
+        entry.rows=[(label,entry.data.get(key,'')) for key,label,maximum in INTAKE_FIELDS]
+    return render(request,'clinic/patient_detail.html',{**intake_context(getattr(patient,'portal_account',None)),'record_changes':changes,'change_page':change_page,'intake_page':intake_page,'prescription_references':patient.prescription_references.all()[:10],'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm(),'portal_profile':getattr(patient,'portal_account',None),'portal_activity':consented_activity(patient),'advice_deliveries':history_page(request, patient.pk),'advice_packets':patient.advice_packets.all()[:20]})
 
 
 @manager_required
 @require_http_methods(['GET','POST'])
 def patient_edit(request, pk):
     patient = get_object_or_404(Patient,pk=pk)
-    form = PatientForm(request.POST if request.method == 'POST' else None, instance=patient)
-    if request.method == 'POST' and form.is_valid():
+    form = PatientForm(instance=patient)
+    if request.method == 'POST':
         with transaction.atomic():
-            patient = form.save()
-            audit(request,'patient.update',patient.pk)
-        return redirect(patient)
-    return render(request,'clinic/form.html',{'section':'patients','form':form,'title':'ویرایش مشخصات و سوابق','description':'یادداشت‌های ویزیت قبلی مستقل از این فرم باقی می‌مانند.','back_url':'patients'})
+            patient=get_object_or_404(Patient.objects.select_for_update(),pk=pk)
+            before={key:getattr(patient,key) for key in PatientForm.Meta.fields}
+            form=PatientForm(request.POST,instance=patient)
+            if form.is_valid():
+                patient=form.save()
+                changes={key:{'before':before[key] or '', 'after':getattr(patient,key) or ''} for key in before if before[key]!=getattr(patient,key)}
+                if changes:
+                    PatientRecordChange.objects.create(patient=patient,actor=request.user,changes=changes)
+                audit(request,'patient.update',patient.pk)
+                return redirect(patient)
+    return render(request,'clinic/form.html',{'section':'patients','form':form,'title':'ویرایش مشخصات و سوابق','description':'تغییرات با تاریخ و نام پزشک نگهداری می‌شوند؛ ویزیت‌های قبلی ثابت می‌مانند.','back_url':'patients'})
 
 
 @manager_required

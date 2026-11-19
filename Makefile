@@ -23,4 +23,4 @@ check:
 
 browser:
 	$(VENV_PYTHON) manage.py collectstatic --noinput
-	$(VENV_PYTHON) manage.py test clinic.browser_checks --noinput
+	$(VENV_PYTHON) scripts/check_browser.py

@@ -1,10 +1,18 @@
 # Shared website / clinic patient portal
 
-This stage uses one patient identity and record authority: this Django application and its dedicated PostgreSQL database/private document volume. The website is a same-origin client, not a second patient database. No patients are matched automatically by self-declared email, phone or national ID. Complete patient profiles create their own Patient record; clinician notes and patient-reported text remain separate.
+This stage uses one patient identity and record authority: this Django application and its dedicated PostgreSQL database/private document volume. The intended website integration is a same-origin client, not a second patient database. No patients are matched automatically by self-declared email, phone or national ID. Complete patient profiles create their own Patient record; clinician notes and patient-reported text remain separate.
+
+## Current activation status — 2026-11-19
+
+The referenced main-website thread was read before integration decisions. Its current `origin/main` (`5f9a65b…`) has a GitHub CMS-owner account client, not a deployed patient signup or Clinic API proxy. That content-management identity remains separate and never grants a clinical role. Another task is editing the website; this stage does not change or deploy it.
+
+The ready native shared entry is `/dash/account/`: chosen username/email + password, or Google OpenID Connect when its dedicated keys are configured. Both methods use Django User/PortalAccount and the same session; see [GOOGLE_SIGNIN.md](GOOGLE_SIGNIN.md). No Supabase Auth project or second identity authority was created. `SITE_ACCOUNT_URL` defaults to the native entry. Change it to `/account/` only after the website client/proxy described below actually exists and passes same-origin integration checks.
+
+Public `/clinic/account/` is an inert design preview. No real passwords, Google consent, patient signup, uploads or backend API are enabled by publishing it. The native private backend is still not deployed.
 
 ## Surfaces and authorization
 
-- `/dash/portal/`: patient interface; `/account/` and the website's header modal read/write the same API and session.
+- `/dash/portal/`: patient interface; `/dash/account/`: current shared account entry. Future website `/account/` and header modal must read/write this same API/session once implemented.
 - `/dash/api/portal/session`: safe user/capabilities, CSRF token and consent flags. GET sets the CSRF cookie; all browser mutations retain Django CSRF protection.
 - POST `signup`, `login`, `logout`, `password`, `recovery`, `reset-password`; GET/POST `profile`, `privacy`, `activity`, `documents`.
 - `documents/<uuid>/download`: patient ownership check on every request, attachment-only response and no public media route. The existing manager document route remains restricted to clinical managers; website admin status gives no clinical access. Secretary remains denied.
@@ -22,8 +30,8 @@ The application is not deployed in this stage. Do not point preview traffic at a
 
 1. Run the existing Docker/Python deployment with a dedicated PostgreSQL database (`verify-full` TLS), persistent private document volume, encrypted backups and an actual restore check. See README and the handoff's remaining operational requirements. No patient files or secrets belong in Git or the web's public directory.
 2. Set the Clinic secrets/host allowlist from `.env.example`. Set `CLINIC_PROXY_KEY` to a strong random value in the server secret manager and the same environment's Cloudflare Pages secret. Restrict direct origin access. Set Clinic's allowed host to the real upstream hostname and CSRF trusted origins to the actual public site. `TRUST_HTTPS_PROXY=1` is only for an ingress that overwrites that header.
-3. On the website, set `CLINIC_ORIGIN` to the HTTPS origin only (no path, credentials, query or fragment). The website proxy accepts the fixed origin or a configured `CLINIC_APP` binding, filters cookies/headers, bounds request bodies and never follows authentication redirects. A missing/unavailable clinic fails closed, with no second patient-signup fallback.
-4. Run `python manage.py migrate --noinput` (including both `0006` branches, merge `0007_merge_calendar_portal` and Calendar `0008`) and `collectstatic --noinput`. Schedule `python manage.py purge_portal_activity` daily in the host/container; it touches only expired optional activity, not medical records. Keep the existing scheduling worker separately.
+3. Implement/restore and review the same-origin website client/proxy first; it is not present on the inspected current main branch. Then on the website, set `CLINIC_ORIGIN` to the HTTPS origin only (no path, credentials, query or fragment). The website proxy accepts the fixed origin or a configured `CLINIC_APP` binding, filters cookies/headers, bounds request bodies and never follows authentication redirects. A missing/unavailable clinic fails closed, with no second patient-signup fallback.
+4. Run `python manage.py migrate --noinput` (including both `0006` branches, merge `0007_merge_calendar_portal` and Calendar `0008`, plus workspace/auth migrations through `0014`) and `collectstatic --noinput`. Schedule `python manage.py purge_portal_activity` daily in the host/container; it touches only expired optional activity, not medical records. Keep the existing scheduling worker separately.
 5. Verify real HTTPS cookies, CSRF, signup → website profile/upload → native `/dash/portal/` → native edit → website read; logout/password revocation, cross-patient/secretary denial and private backups/storage. Use synthetic isolated preview data only, then clean it up. Do not seed real users or send recovery email as a test.
 6. The website's GitHub-owner/AUS D1 services and IntMed/AUS backends remain independent. No copy/synchronization of those credentials is part of this portal. Calendar/notifications remain disabled until separately configured/authorized.
 

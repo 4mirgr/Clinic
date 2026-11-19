@@ -47,3 +47,14 @@ document.querySelector('[data-print]')?.addEventListener('click', async () => {
    document.body.append(stage);document.body.classList.add('printing-demo');document.querySelector('.workspace').hidden=true;window.scrollTo(0,0);await document.fonts.ready;
  });filter();update();
 })();
+
+// Global patient search stays in the finite synthetic export; no patient API.
+document.querySelector('.top-search')?.addEventListener('submit',event=>{
+ event.preventDefault();location.assign('/clinic/patients/?q='+encodeURIComponent(event.target.elements.q.value));
+});
+(() => {
+ const input=document.querySelector('#patient-search');if(!input)return;
+ const normalize=s=>s.normalize('NFKC').toLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/\s+/g,' ').trim();
+ const initial=new URLSearchParams(location.search).get('q');if(initial)input.value=initial.slice(0,200);
+ const filter=()=>{const query=normalize(input.value);document.querySelectorAll('tbody tr').forEach(row=>row.hidden=!normalize(row.textContent).includes(query));};input.addEventListener('input',filter);filter();
+})();

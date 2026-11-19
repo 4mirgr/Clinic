@@ -1,12 +1,18 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views,education_views
+from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views,education_views,workspace,google_signin
 
 urlpatterns = [
     path('dash/api/portal/documents/<uuid:pk>/download', portal_api.document_download),
     path('dash/api/portal/<path:route>', portal_api.endpoint),
     path('dash/portal/', portal_api.patient_home, name='patient_portal'),
     path('dash', RedirectView.as_view(url='/dash/', permanent=False)),
+    path('dash/account/google/', google_signin.start, name='google_signin'),
+    path('dash/account/google/callback/', google_signin.callback, name='google_signin_callback'),
+    path('dash/account/', workspace.shared_account, name='shared_account'),
+    path('dash/visits/<int:pk>/followup-done/', workspace.followup_done, name='followup_done'),
+    path('dash/visits/', workspace.visits, name='visits'),
+    path('dash/prescriptions/', workspace.prescriptions, name='prescriptions'),
     path('dash/', views.dashboard, name='dashboard'),
     path('dash/login/', views_auth.login_choice, name='login_choice'),
     path('dash/login/manager/', views_auth.portal_login, {'role':'manager'}, name='manager_login'),

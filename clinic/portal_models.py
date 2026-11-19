@@ -14,6 +14,12 @@ class PortalAccount(models.Model):
     reported_history = models.TextField(max_length=10000, blank=True)
     reported_medications = models.TextField(max_length=5000, blank=True)
     reported_allergies = models.TextField(max_length=5000, blank=True)
+    reported_current_problem = models.TextField(max_length=6000, blank=True)
+    reported_onset = models.TextField(max_length=2000, blank=True)
+    reported_surgeries = models.TextField(max_length=5000, blank=True)
+    reported_family_history = models.TextField(max_length=5000, blank=True)
+    reported_supplements = models.TextField(max_length=3000, blank=True)
+    reported_social_history = models.TextField(max_length=5000, blank=True)
     track_activity = models.BooleanField(default=False)
     share_activity = models.BooleanField(default=False)
     consent_updated_at = models.DateTimeField(null=True, blank=True)
@@ -39,3 +45,26 @@ class PortalRecoveryRequest(models.Model):
     account = models.ForeignKey(PortalAccount, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
+
+
+class PatientIntakeSubmission(models.Model):
+    account = models.ForeignKey(PortalAccount, on_delete=models.PROTECT, related_name='intake_submissions')
+    patient = models.ForeignKey('clinic.Patient', on_delete=models.PROTECT, related_name='intake_submissions')
+    data = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at','-pk']
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            from django.core.exceptions import ValidationError
+            raise ValidationError('اطلاعات قبلی حفظ می‌شود؛ نسخه جدید ثبت کنید.')
+        return super().save(*args, **kwargs)
+
+
+class GoogleIdentity(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='google_identity')
+    subject = models.CharField(max_length=255, unique=True)
+    email = models.EmailField()
+    created_at = models.DateTimeField(auto_now_add=True)

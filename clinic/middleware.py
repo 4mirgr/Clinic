@@ -16,7 +16,7 @@ class PrivateResponsesMiddleware:
         if request.path.startswith('/dash'):
             # Chromium enforces form-action across POST redirects. Only these OAuth
             # initiation documents may navigate a submitted form to Google's consent origin.
-            form_action = "'self' https://accounts.google.com" if request.path in ('/dash/calendar/','/dash/calendar/connect/') else "'self'"
+            form_action = "'self' https://accounts.google.com" if request.path in ('/dash/calendar/','/dash/calendar/connect/','/dash/account/google/') else "'self'"
             response['Cache-Control'] = 'private, no-store, max-age=0'
             response['Pragma'] = 'no-cache'
             # Chromium sends Origin:null on form POSTs under no-referrer.

@@ -11,7 +11,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','deploy/preview/preview.css','static/clinic/education.css','static/clinic/print-pager.js'))).hexdigest()[:12]
+ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','deploy/preview/preview.css','static/clinic/education.css','static/clinic/print-pager.js','static/clinic/workspace.css','static/clinic/workspace.js','static/clinic/portal.css'))).hexdigest()[:12]
 sys.path.insert(0, str(ROOT))
 
 
@@ -46,10 +46,10 @@ class ReadOnlyHTML(HTMLParser):
             attributes['disabled'] = ''
         if tag == 'option' and attributes.get('value') == '11111111-1111-4111-8111-111111111111':
             attributes['selected'] = ''
-        if attributes.get('href') == '/clinic/static/clinic/education.css':
+        if attributes.get('href') in ('/clinic/static/clinic/education.css','/clinic/static/clinic/workspace.css','/clinic/static/clinic/portal.css'):
             attributes['href'] += '?v='+ASSET_VERSION
         if attributes.get('href') == '/account/':
-            attributes['href'] = '/clinic/login/'
+            attributes['href'] = '/clinic/account/'
         rendered = ''.join(f' {key}' if value is None else f' {key}="{html.escape(value, quote=True)}"' for key, value in attributes.items())
         self.parts.append(f'<{tag}{rendered}>')
         if tag == 'body':
@@ -62,7 +62,7 @@ class ReadOnlyHTML(HTMLParser):
         if self.skip_script:
             return
         if tag == 'head':
-            self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css?v={ASSET_VERSION}"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
+            self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css?v={ASSET_VERSION}"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/workspace.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
         if tag == 'form':
             self.theme_form = False
         self.parts.append(f'</{tag}>')
@@ -87,7 +87,7 @@ def build(output):
     with tempfile.TemporaryDirectory(prefix='clinic-public-preview-') as data_dir:
         os.environ.update(CLINIC_ENV='development', DATABASE_URL='', CLINIC_DATA_DIR=data_dir,
                           CLINIC_PUBLIC_URL='https://drgerami-md.ir/clinic', CLINIC_PROXY_KEY='', GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET='',
-                          GOOGLE_TOKEN_ENCRYPTION_KEY='', DJANGO_SETTINGS_MODULE='config.settings',
+                          GOOGLE_TOKEN_ENCRYPTION_KEY='', GOOGLE_AUTH_CLIENT_ID='', GOOGLE_AUTH_CLIENT_SECRET='', SITE_ACCOUNT_URL='/dash/account/', DJANGO_SETTINGS_MODULE='config.settings',
                           DJANGO_ALLOWED_HOSTS='testserver,localhost,127.0.0.1',
                           DJANGO_SECRET_KEY='isolated-preview-build-only-not-a-production-secret-8543189265074138')
         import django
@@ -95,17 +95,24 @@ def build(output):
         from django.contrib.auth.models import Group, User
         from django.core.management import call_command
         from django.test import Client
-        from clinic.models import Advice, AdviceDelivery, Patient, PortalAccount, Visit, PatientSummary
+        from clinic.models import Advice, AdviceDelivery, Patient, PortalAccount, Visit, PatientSummary, PatientIntakeSubmission, PatientRecordChange, PrescriptionReference
         from clinic.advice_catalog import load_defaults
         call_command('migrate', interactive=False, verbosity=0)
         doctor = User.objects.create_user('preview-doctor', first_name='پزشک آزمایشی')
         doctor.groups.add(Group.objects.get_or_create(name='clinic_manager')[0])
         patient = Patient.objects.create(id=uuid.UUID('11111111-1111-4111-8111-111111111111'), first_name='بیمار', last_name='آزمایشی', phone='00000000000', history='این پرونده فقط نمونه نمایشی است و مربوط به شخص واقعی نیست.')
-        Visit.objects.create(patient=patient, author=doctor, note='یادداشت نمایشی برای بررسی طراحی خط زمانی؛ محتوای پزشکی واقعی نیست.')
+        from datetime import timedelta
+        from clinic.jalali import today_tehran
+        Visit.objects.create(patient=patient, author=doctor, mode='in_person', chief_complaint='ویزیت حضوری نمایشی', assessment='ارزیابی ساختگی؛ تشخیص پزشکی نیست.', plan='برنامهٔ پیگیری فقط برای نمایش طراحی.', follow_up_on=today_tehran()+timedelta(days=7), note='یادداشت نمایشی برای بررسی طراحی خط زمانی؛ محتوای پزشکی واقعی نیست.')
         advice = Advice.objects.create(id=uuid.UUID('22222222-2222-4222-8222-222222222222'), title='راهنمای نمونه نمایشی', tags='نمونه رابط کاربری', body='این متن صرفاً برای نمایش طراحی توصیه‌هاست و توصیه پزشکی معتبر نیست.\n\nنسخه ثبت‌شده در پرونده، مستقل از تغییرات بعدی کتابخانه نگهداری می‌شود.', source='محتوای کاملاً نمایشی؛ برای استفاده درمانی نیست.', is_approved=True, updated_by=doctor)
         record = AdviceDelivery.objects.create(id=uuid.UUID('33333333-3333-4333-8333-333333333333'), patient=patient, advice=advice, title=advice.title, body=advice.body, tags=advice.tags, source=advice.source, advice_updated_at=advice.updated_at, created_by=doctor, request_key=uuid.UUID('44444444-4444-4444-8444-444444444444'))
+        Visit.objects.create(patient=patient,author=doctor,mode='online',chief_complaint='پیگیری آنلاین نمایشی',note='این ویزیت مربوط به شخص واقعی نیست.',follow_up_on=today_tehran()-timedelta(days=1))
+        PatientRecordChange.objects.create(patient=patient,actor=doctor,changes={'history':{'before':'شرح ساختگی اولیه','after':patient.history}})
+        PrescriptionReference.objects.create(patient=patient,author=doctor,provider='drnext',reference='DEMO-REFERENCE',note='کد کاملاً ساختگی؛ نسخه‌ای ارسال نشده است.')
         member = User.objects.create_user('preview-patient', first_name='بیمار آزمایشی')
-        PortalAccount.objects.create(user=member, patient=patient, email='preview@example.test')
+        account=PortalAccount.objects.create(user=member, patient=patient, email='preview@example.test',reported_current_problem='مشکل ساختگی برای بررسی ظاهر فرم؛ مربوط به بیمار واقعی نیست.',reported_history='سابقهٔ کاملاً نمایشی',reported_family_history='سابقه خانوادگی ساختگی',reported_medications='داروی نمونه؛ دستور مصرف نیست.',reported_allergies='اطلاعات حساسیت نمایشی')
+        from clinic.portal_api import profile_data
+        PatientIntakeSubmission.objects.create(account=account,patient=patient,data=profile_data(account))
         load_defaults(doctor)
         PatientSummary.objects.create(patient=patient, updated_by=doctor, published_by=doctor, published_at=advice.updated_at, draft_data={}, published_data={'history':'خلاصهٔ کاملاً ساختگی برای نمایش طراحی؛ مربوط به هیچ شخصی نیست.','conditions':'بیماری نمونه؛ اطلاعات واقعی نیست.','medications':'داروی نمونه؛ دستور مصرف نیست.','health_status':'وضعیت سلامت ساختگی','progress':'روند پیگیری نمایشی'})
         client = Client()
@@ -118,7 +125,7 @@ def build(output):
             patient.get_absolute_url()+'advice/': 'advice-select.html', patient.get_absolute_url()+f'advice/{advice.pk}/': 'advice-confirm.html',
             record.get_absolute_url(): 'advice-record.html', '/dash/calendar/': 'calendar.html',
             '/dash/calendar/settings/': 'calendar-settings.html', '/dash/calendar/availability/': 'availability.html',
-            '/dash/activity/': 'activity.html',
+            '/dash/activity/': 'activity.html', '/dash/visits/':'visits.html','/dash/prescriptions/':'prescriptions.html',
             patient.get_absolute_url()+'summary/': 'patient-summary.html',
         }
         for guide in Advice.objects.exclude(catalog_key=None):
@@ -154,9 +161,10 @@ def build(output):
         capture('/dash/portal/', 'portal.html')
         capture('/dash/booking/', 'booking.html')
         client.logout()
-        for route, filename in [('/dash/login/','login.html'),('/dash/login/manager/','manager-login.html'),('/dash/login/secretary/','secretary-login.html')]:
+        for route, filename in [('/dash/account/','shared-account.html'),('/dash/login/','login.html'),('/dash/login/manager/','manager-login.html'),('/dash/login/secretary/','secretary-login.html')]:
             capture(route, filename)
         assets = {
+            'workspace.css':'text/css; charset=utf-8', 'workspace.js':'text/javascript; charset=utf-8','workspace-icons.svg':'image/svg+xml',
             'print-pager.js':'text/javascript; charset=utf-8', 'education.css':'text/css; charset=utf-8', 'education.js':'text/javascript; charset=utf-8', 'brand/logo.webp':'image/webp',
             'fonts/vazirmatn-print-regular.ttf':'font/ttf', 'fonts/vazirmatn-print-semibold.ttf':'font/ttf',
             'app.css':'text/css; charset=utf-8', 'portal.css':'text/css; charset=utf-8', 'favicon.svg':'image/svg+xml',
@@ -169,7 +177,8 @@ def build(output):
         for path, content_type in [('preview.css','text/css; charset=utf-8'),('preview.js','text/javascript; charset=utf-8')]:
             manifest['/clinic/'+path] = {'path':'deploy/preview/'+path, 'type':content_type}
         (output / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n')
-        print(f'Exported {len(pages)+5} synthetic pages and {len(manifest)} public routes to {output}')
+        count=sum(asset['type'].startswith('text/html') for asset in manifest.values())
+        print(f'Exported {count} synthetic pages and {len(manifest)} public routes to {output}')
 
 
 if __name__ == '__main__':
