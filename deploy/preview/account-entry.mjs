@@ -23,8 +23,10 @@ export function withAccountEntry(preview,manifest){
   }catch{return new Response('ورود موقتاً در دسترس نیست؛ صفحه را دوباره باز کنید. / Sign-in is temporarily unavailable. Please retry.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'private, no-store',Vary:'Cookie'}});}
   if(value.authenticated!==true||!['admin','secretary','user'].includes(value.account?.role))return redirect(login);
   const staff=value.account.role==='admin'||value.account.role==='secretary';
-  if(!staff&&!path.startsWith('/clinic/portal/'))return redirect('/clinic/portal/');
-  if(staff&&path.startsWith('/clinic/portal/'))return redirect('/clinic/');
+  const patientView=path.startsWith('/clinic/portal/')||path==='/clinic/booking/';
+  const sharedDocument=/^\/clinic\/(?:advice-records\/[a-f0-9-]{36}\/|advice\/bundles\/[a-f0-9-]{36}\/|patients\/[a-f0-9-]{36}\/summary\/)$/i.test(path);
+  if(!staff&&!patientView&&!sharedDocument)return redirect('/clinic/portal/');
+  if(staff&&patientView)return redirect('/clinic/');
   const result=await preview.fetch(request,env,ctx),headers=new Headers(result.headers);
   headers.set('Cache-Control','private, no-store');headers.set('Vary','Cookie');headers.set('X-Clinic-Identity','shared');
   return new Response(result.body,{status:result.status,headers});
