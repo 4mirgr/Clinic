@@ -13,4 +13,6 @@ def clinic_context(request):
     return {'clinic_name': settings.CLINIC_NAME, 'clinic_title': 'متخصص داخلی',
             'clinic_site': settings.CLINIC_SITE, 'clinic_role': role_for(request.user),
             'interface_theme': theme,
+            'shared_patient_staff': getattr(settings,'SHARED_AUTH_ENABLED',False) and role_for(request.user)=='secretary',
+            'shared_auth_enabled': getattr(settings,'SHARED_AUTH_ENABLED',False),
             'inside_clinic':request.path == '/dash' or request.path.startswith('/dash/')}

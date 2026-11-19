@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
+from django.conf import settings
 
 
 def role_for(user):
@@ -31,6 +32,18 @@ def calendar_staff_required(view):
         if not request.user.is_authenticated:
             return redirect('login_choice')
         if role_for(request.user) not in ('manager','secretary'):
+            raise PermissionDenied
+        return view(request,*args,**kwargs)
+    return wrapped
+
+
+def patient_staff_required(view):
+    @wraps(view)
+    def wrapped(request,*args,**kwargs):
+        role = role_for(request.user)
+        if not request.user.is_authenticated:
+            return redirect('login_choice')
+        if role != 'manager' and not (getattr(settings,'SHARED_AUTH_ENABLED',False) and role == 'secretary'):
             raise PermissionDenied
         return view(request,*args,**kwargs)
     return wrapped

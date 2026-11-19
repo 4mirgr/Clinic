@@ -68,3 +68,15 @@ class GoogleIdentity(models.Model):
     subject = models.CharField(max_length=255, unique=True)
     email = models.EmailField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class SharedIdentity(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='shared_identity')
+    issuer = models.URLField(max_length=200)
+    subject = models.UUIDField()
+    auth_version = models.PositiveIntegerField(default=0)
+    revoked_before = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['issuer','subject'], name='shared_identity_issuer_subject_unique')]
