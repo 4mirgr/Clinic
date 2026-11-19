@@ -57,11 +57,15 @@ def resolve_user(account, started):
     with transaction.atomic():
         identity = SharedIdentity.objects.select_for_update().select_related('user').filter(issuer=ISSUER, subject=subject).first()
         email = account['email'].strip().lower()
+        if identity is None and (PortalAccount.objects.filter(email__iexact=email).exists() or User.objects.filter(email__iexact=email).exists()):
+            # Another first request may have committed between the first lookup
+            # and the email check. Recheck the verified subject, never link by email.
+            identity = SharedIdentity.objects.select_for_update().select_related('user').filter(issuer=ISSUER, subject=subject).first()
+            if identity is None:
+                raise SharedIdentityError('explicit_account_link_required', 409)
         if identity is None:
             # An existing local email requires deliberate verified migration.
             # It must never implicitly attach a medical record or staff account.
-            if PortalAccount.objects.filter(email__iexact=email).exists() or User.objects.filter(email__iexact=email).exists():
-                raise SharedIdentityError('explicit_account_link_required', 409)
             user = User(username='shared_' + uuid.uuid4().hex, email=email)
             user.set_unusable_password()
             user.save()

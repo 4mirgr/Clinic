@@ -35,6 +35,14 @@ class SharedIdentityTests(TestCase):
         with self.assertRaises(SharedIdentityError) as caught:resolve_user(self.account,self.started)
         self.assertEqual(caught.exception.status,409);self.assertEqual(SharedIdentity.objects.count(),0)
 
+    def test_concurrent_identity_commit_rechecks_subject_before_email_conflict(self):
+        user,_=resolve_user(self.account,self.started)
+        identity=SharedIdentity.objects.get(user=user)
+        with patch.object(SharedIdentity.objects,'select_for_update') as locked:
+            locked.return_value.select_related.return_value.filter.return_value.first.side_effect=[None,identity]
+            self.assertEqual(resolve_user(self.account,self.started)[0],user)
+        self.assertEqual(User.objects.count(),1)
+
     def test_local_revocation_survives_local_cookie_deletion(self):
         user,portal=resolve_user(self.account,self.started)
         portal.auth_version+=1;portal.save(update_fields=['auth_version'])
