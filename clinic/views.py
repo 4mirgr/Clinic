@@ -12,7 +12,7 @@ from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from .access import manager_required, role_for
+from .access import manager_required, patient_staff_required, role_for
 from .forms import AdviceForm, DocumentForm, PatientForm, VisitForm, normalize
 from .models import Advice, AuditEvent, Document, Patient, PatientRecordChange
 
@@ -37,7 +37,7 @@ def dashboard(request):
     return render(request,'clinic/dashboard.html',doctor_dashboard())
 
 
-@manager_required
+@patient_staff_required
 @require_GET
 def patients(request):
     q = normalize(request.GET.get('q','')[:200])
@@ -59,7 +59,7 @@ def patients(request):
     return render(request,'clinic/patients.html', {'section':'patients','q':q,'visited':request.GET.get('visited')=='1','page':Paginator(records,20).get_page(request.GET.get('page'))})
 
 
-@manager_required
+@patient_staff_required
 @require_http_methods(['GET','POST'])
 def patient_new(request):
     form = PatientForm(request.POST if request.method == 'POST' else None)
@@ -82,7 +82,7 @@ def consented_activity(patient):
     return account.site_activity.filter(day__gte=timezone.localdate()-timedelta(days=90)).values('kind','value','category').annotate(count=Sum('count')).order_by('-count')[:30]
 
 
-@manager_required
+@patient_staff_required
 @require_GET
 def patient_detail(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
@@ -101,7 +101,7 @@ def patient_detail(request, pk):
     return render(request,'clinic/patient_detail.html',{**intake_context(getattr(patient,'portal_account',None)),'record_changes':changes,'change_page':change_page,'intake_page':intake_page,'prescription_references':patient.prescription_references.all()[:10],'section':'patients','patient':patient,'visit_form':VisitForm(),'document_form':DocumentForm(),'portal_profile':getattr(patient,'portal_account',None),'portal_activity':consented_activity(patient),'advice_deliveries':history_page(request, patient.pk),'advice_packets':patient.advice_packets.all()[:20]})
 
 
-@manager_required
+@patient_staff_required
 @require_http_methods(['GET','POST'])
 def patient_edit(request, pk):
     patient = get_object_or_404(Patient,pk=pk)
@@ -121,7 +121,7 @@ def patient_edit(request, pk):
     return render(request,'clinic/form.html',{'section':'patients','form':form,'title':'ویرایش مشخصات و سوابق','description':'تغییرات با تاریخ و نام پزشک نگهداری می‌شوند؛ ویزیت‌های قبلی ثابت می‌مانند.','back_url':'patients'})
 
 
-@manager_required
+@patient_staff_required
 @require_POST
 def visit_new(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
@@ -136,7 +136,7 @@ def visit_new(request, pk):
     return render(request,'clinic/form.html',{'section':'patients','form':form,'title':'ثبت شرح ویزیت','back_url':'patients'})
 
 
-@manager_required
+@patient_staff_required
 @require_POST
 def document_new(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
@@ -150,7 +150,7 @@ def document_new(request, pk):
     return render(request,'clinic/form.html',{'section':'patients','form':form,'title':'افزودن مدرک','description':'PDF، JPG یا PNG؛ حداکثر ۲۰ مگابایت. مشاهده‌گر DICOM هنوز اضافه نشده است.','multipart':True,'back_url':'patients'})
 
 
-@manager_required
+@patient_staff_required
 @require_GET
 def document_download(request, pk):
     document = get_object_or_404(Document,pk=pk)

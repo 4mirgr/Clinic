@@ -100,6 +100,11 @@ PASSWORD_RESET_TIMEOUT = 900
 
 CLINIC_PUBLIC_URL = os.environ.get('CLINIC_PUBLIC_URL', CLINIC_SITE+'/dash').rstrip('/')
 
+# Explicit activation gate: the public /clinic export never enables this bridge.
+SHARED_AUTH_ENABLED = os.getenv('SHARED_AUTH_ENABLED', '0') == '1'
+MIDDLEWARE.insert(MIDDLEWARE.index('django.contrib.auth.middleware.AuthenticationMiddleware') + 1,
+                  'clinic.shared_identity.SharedIdentityMiddleware')
+
 SITE_ACCOUNT_URL = os.environ.get('SITE_ACCOUNT_URL','/dash/account/')
 
 GOOGLE_AUTH_CLIENT_ID = os.getenv('GOOGLE_AUTH_CLIENT_ID','')
