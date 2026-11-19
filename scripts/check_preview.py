@@ -134,6 +134,11 @@ try:
         page.goto(base+'/clinic/account/')
         assert page.locator('#shared-login [type=password]').is_disabled()
         assert page.locator('#shared-signup [type=password]').is_disabled()
+        page.locator('[data-auth-mode=signup]').click()
+        expect(page.locator('#shared-signup')).to_be_visible()
+        assert page.locator('#shared-signup [name=username]').is_disabled()
+        page.locator('[data-auth-mode=login]').click()
+        expect(page.locator('#shared-login')).to_be_visible()
         assert not errors, errors
         assert not failures, failures
         assert all(method in ('GET','HEAD') and '/api/' not in url for method,url in requests), requests

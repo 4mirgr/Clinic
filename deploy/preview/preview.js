@@ -3,6 +3,11 @@ document.querySelector('.menu-toggle')?.addEventListener('click', event => {
   event.currentTarget.setAttribute('aria-expanded', String(expanded));
   document.querySelector('.sidebar')?.classList.toggle('is-open', expanded);
 });
+// Switch between inert account designs; credential controls stay disabled.
+document.querySelectorAll('[data-auth-mode]').forEach(button=>button.addEventListener('click',()=>{
+ document.querySelector('#shared-login').hidden=button.dataset.authMode!=='login';
+ document.querySelector('#shared-signup').hidden=button.dataset.authMode!=='signup';
+}));
 document.querySelectorAll('[data-preview-form]').forEach(form => {
   form.addEventListener('submit', event => {
     event.preventDefault();
