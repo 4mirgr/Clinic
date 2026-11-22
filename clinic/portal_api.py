@@ -46,7 +46,7 @@ def answer(data, status=200):
 
 
 def csrf_failure(request, reason=''):
-    if request.path.startswith('/dash/api/portal/'):
+    if request.path.startswith(('/dash/api/portal/', '/dash/api/communications/')):
         return answer({'error': 'csrf_rejected'}, 403)
     return default_csrf_failure(request, reason=reason)
 
@@ -115,6 +115,13 @@ def locked_account(request, account):
     return current
 
 
+def clinical_account_for(request):
+    account = account_for(request, True)
+    if role_for(request.user) == 'secretary':
+        raise PortalError('clinical_access_denied', 403)
+    return account
+
+
 def safe_user(user, account=None):
     return {
         'id': 'clinic:' + str(account.pk) if account else 'clinic-staff:' + str(user.pk),
@@ -165,7 +172,7 @@ def signup(request):
     password = check_password(data.get('password'))
     phone = normalize(text(data.get('phone', ''), 24))
     rate(request, 'portal-signup', 8)
-    if User.objects.filter(username__iexact=username).exists() or PortalAccount.objects.filter(email=email).exists():
+    if User.objects.filter(username__iexact=username).exists() or PortalAccount.objects.filter(email=email).exists() or User.objects.filter(email__iexact=email).exists():
         raise PortalError('registration_unavailable', 409)
     try:
         with transaction.atomic():
@@ -189,8 +196,10 @@ def sign_in(request):
     rate(request, 'portal-login-ip', 30)
     rate(request, 'portal-login-account', 10, identifier)
     if '@' in identifier:
-        found = PortalAccount.objects.select_related('user').filter(email=identifier).first()
-        username = found.user.username if found else identifier
+        matches = list(User.objects.filter(Q(email__iexact=identifier) | Q(portal_account__email__iexact=identifier)).distinct().values_list('username', flat=True)[:2])
+        if len(matches) != 1:
+            raise PortalError('invalid_credentials', 401)
+        username = matches[0]
     else:
         existing = User.objects.filter(username__iexact=identifier).first()
         username = existing.username if existing else identifier
@@ -203,7 +212,7 @@ def sign_in(request):
     login(request, user)
     if account:
         request.session['portal_auth_version'] = account.auth_version
-    request.session.set_expiry(86400 if account else 1800)
+    request.session.set_expiry(1800 if role_for(user) else 86400)
     return {'user': safe_user(user, account)}
 
 
@@ -221,7 +230,7 @@ def profile_envelope(account):
 
 
 def profile(request):
-    account = account_for(request, True)
+    account = clinical_account_for(request)
     if request.method == 'GET':
         return profile_envelope(account)
     data = data_body(request, ['display_name', 'phone', 'first_name', 'last_name', *[key for key,label,maximum in INTAKE_FIELDS]])
@@ -343,7 +352,7 @@ def document_data(document):
 
 
 def documents(request):
-    account = account_for(request, True)
+    account = clinical_account_for(request)
     if request.method == 'GET':
         return {'documents': [document_data(d) for d in Document.objects.filter(patient_id=account.patient_id)[:100]] if account.patient_id else []}
     if not account.patient_id:
@@ -392,14 +401,18 @@ def documents(request):
 @require_GET
 def document_download(request, pk):
     try:
-        account = account_for(request, True)
+        account = clinical_account_for(request)
     except PortalError as error:
         return answer({'error': error.code}, error.status)
     document = Document.objects.filter(pk=pk, patient_id=account.patient_id).first() if account.patient_id else None
     if not document:
         raise Http404
+    try:
+        stream = document.file.open('rb')
+    except FileNotFoundError:
+        raise Http404('فایل موجود نیست؛ پشتیبان ذخیره‌سازی بررسی شود.')
     AuditEvent.objects.create(actor=request.user, action='portal.document_download', target=str(document.pk))
-    return FileResponse(document.file.open('rb'), as_attachment=True, filename='medical-document' + Path(document.file.name).suffix.lower(), content_type='application/octet-stream')
+    return FileResponse(stream, as_attachment=True, filename='medical-document' + Path(document.file.name).suffix.lower(), content_type='application/octet-stream')
 
 
 def verified_owner(request):
@@ -546,4 +559,4 @@ def patient_home(request):
     from .advice_views import history_page
     clinical = role_for(request.user) != 'secretary'
     from .workspace import intake_context
-    return render(request, 'clinic/portal.html', {**intake_context(account),'portal_account':account,'advice_deliveries': history_page(request, account.patient_id), 'advice_packets': account.patient.advice_packets.all()[:20] if account.patient_id and clinical else [], 'linked_patient':account.patient if account.patient_id and clinical else None})
+    return render(request, 'clinic/portal.html', {**intake_context(account if clinical else None),'portal_account':account,'advice_deliveries': history_page(request, account.patient_id), 'advice_packets': account.patient.advice_packets.all()[:20] if account.patient_id and clinical else [], 'linked_patient':account.patient if account.patient_id and clinical else None})

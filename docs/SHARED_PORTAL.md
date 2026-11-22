@@ -1,5 +1,7 @@
 # Shared website / clinic patient portal
 
+> Current identity note (2026-11-22): the owner's subsequent shared Supabase decision and deployed preview identity gate supersede historical standalone/CMS-only statements below. See [SHARED_SUPABASE_IDENTITY.md](SHARED_SUPABASE_IDENTITY.md) and the top of PROJECT_HANDOFF.md. Native private SHARED_AUTH_ENABLED stays off; standalone development features remain available.
+
 This stage uses one patient identity and record authority: this Django application and its dedicated PostgreSQL database/private document volume. The intended website integration is a same-origin client, not a second patient database. No patients are matched automatically by self-declared email, phone or national ID. Complete patient profiles create their own Patient record; clinician notes and patient-reported text remain separate.
 
 ## Current activation status — 2026-11-19

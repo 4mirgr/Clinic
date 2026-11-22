@@ -156,6 +156,7 @@ class AdviceDelivery(models.Model):
 # Register related calendar models without bloating the clinical model module.
 from .calendar_models import Appointment, AvailabilityOverride, CalendarConnection, ScheduleSettings  # noqa: E402,F401
 from .portal_models import PortalAccount, SiteActivity, PortalRecoveryRequest, PatientIntakeSubmission, GoogleIdentity, SharedIdentity  # noqa: E402,F401
+from .communication_models import ContactPreference, PatientNotification, TelegramLinkChallenge  # noqa: E402,F401
 
 
 class AdvicePacket(models.Model):

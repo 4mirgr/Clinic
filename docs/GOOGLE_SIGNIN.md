@@ -1,5 +1,7 @@
 # Shared password and Google sign-in
 
+> Current identity note (2026-11-22): the owner's subsequent shared Supabase decision and deployed preview identity gate supersede historical standalone/CMS-only statements below. See [SHARED_SUPABASE_IDENTITY.md](SHARED_SUPABASE_IDENTITY.md) and the top of PROJECT_HANDOFF.md. Native private SHARED_AUTH_ENABLED stays off; standalone development features remain available.
+
 The canonical identity is the existing Django User/PortalAccount, with server-side sessions. `/dash/account/` supports self-chosen username/password registration and username/email login through the existing bounded, CSRF-protected API. Public registration creates patients only. Physician/secretary roles remain explicitly provisioned by the operator; a matching email never grants them.
 
 Google OpenID Connect is implemented separately from Google Calendar. No Supabase project, billing or live Google connection was created. This avoids duplicating existing clinical identities while meeting the requested two login methods. The public `/clinic/account/` shows disabled controls and never collects credentials.

@@ -11,7 +11,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','deploy/preview/preview.css','static/clinic/education.css','static/clinic/print-pager.js','static/clinic/workspace.css','static/clinic/workspace.js','static/clinic/portal.css'))).hexdigest()[:12]
+ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','deploy/preview/preview.css','static/clinic/education.css','static/clinic/print-pager.js','static/clinic/workspace.css','static/clinic/workspace.js','static/clinic/portal.css','static/clinic/intake-assist.js'))).hexdigest()[:12]
 sys.path.insert(0, str(ROOT))
 
 
@@ -62,7 +62,7 @@ class ReadOnlyHTML(HTMLParser):
         if self.skip_script:
             return
         if tag == 'head':
-            self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css?v={ASSET_VERSION}"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/workspace.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
+            self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css?v={ASSET_VERSION}"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/workspace.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/intake-assist.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
         if tag == 'form':
             self.theme_form = False
         self.parts.append(f'</{tag}>')
@@ -87,7 +87,7 @@ def build(output):
     with tempfile.TemporaryDirectory(prefix='clinic-public-preview-') as data_dir:
         os.environ.update(CLINIC_ENV='development', DATABASE_URL='', CLINIC_DATA_DIR=data_dir,
                           CLINIC_PUBLIC_URL='https://drgerami-md.ir/clinic', CLINIC_PROXY_KEY='', GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET='',
-                          GOOGLE_TOKEN_ENCRYPTION_KEY='', GOOGLE_AUTH_CLIENT_ID='', GOOGLE_AUTH_CLIENT_SECRET='', SITE_ACCOUNT_URL='/dash/account/', DJANGO_SETTINGS_MODULE='config.settings',
+                          COMMUNICATIONS_ENABLED='0', EMAIL_HOST='', TELEGRAM_BOT_TOKEN='', WHATSAPP_ACCESS_TOKEN='', GOOGLE_TOKEN_ENCRYPTION_KEY='', GOOGLE_AUTH_CLIENT_ID='', GOOGLE_AUTH_CLIENT_SECRET='', SITE_ACCOUNT_URL='/dash/account/', DJANGO_SETTINGS_MODULE='config.settings',
                           DJANGO_ALLOWED_HOSTS='testserver,localhost,127.0.0.1',
                           DJANGO_SECRET_KEY='isolated-preview-build-only-not-a-production-secret-8543189265074138')
         import django
@@ -125,7 +125,7 @@ def build(output):
             patient.get_absolute_url()+'advice/': 'advice-select.html', patient.get_absolute_url()+f'advice/{advice.pk}/': 'advice-confirm.html',
             record.get_absolute_url(): 'advice-record.html', '/dash/calendar/': 'calendar.html',
             '/dash/calendar/settings/': 'calendar-settings.html', '/dash/calendar/availability/': 'availability.html',
-            '/dash/activity/': 'activity.html', '/dash/visits/':'visits.html','/dash/prescriptions/':'prescriptions.html',
+            '/dash/communications/':'communications.html', '/dash/activity/': 'activity.html', '/dash/visits/':'visits.html','/dash/prescriptions/':'prescriptions.html',
             patient.get_absolute_url()+'summary/': 'patient-summary.html',
         }
         for guide in Advice.objects.exclude(catalog_key=None):
@@ -164,6 +164,7 @@ def build(output):
         for route, filename in [('/dash/account/','shared-account.html'),('/dash/login/','login.html'),('/dash/login/manager/','manager-login.html'),('/dash/login/secretary/','secretary-login.html')]:
             capture(route, filename)
         assets = {
+            'intake-assist.js':'text/javascript; charset=utf-8',
             'workspace.css':'text/css; charset=utf-8', 'workspace.js':'text/javascript; charset=utf-8','workspace-icons.svg':'image/svg+xml',
             'print-pager.js':'text/javascript; charset=utf-8', 'education.css':'text/css; charset=utf-8', 'education.js':'text/javascript; charset=utf-8', 'brand/logo.webp':'image/webp',
             'fonts/vazirmatn-print-regular.ttf':'font/ttf', 'fonts/vazirmatn-print-semibold.ttf':'font/ttf',

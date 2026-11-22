@@ -1,8 +1,12 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views,education_views,workspace,google_signin
+from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views,education_views,workspace,google_signin,communication_views
 
 urlpatterns = [
+    path('dash/api/communications/telegram/link', communication_views.telegram_link),
+    path('dash/api/communications/telegram/webhook', communication_views.telegram_webhook),
+    path('dash/communications/', communication_views.console, name='communications'),
+    path('dash/api/communications/preferences', communication_views.preferences),
     path('dash/api/portal/documents/<uuid:pk>/download', portal_api.document_download),
     path('dash/api/portal/<path:route>', portal_api.endpoint),
     path('dash/portal/', portal_api.patient_home, name='patient_portal'),

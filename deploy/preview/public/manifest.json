@@ -59,6 +59,10 @@
     "path": "deploy/preview/public/availability.html",
     "type": "text/html; charset=utf-8"
   },
+  "/clinic/communications/": {
+    "path": "deploy/preview/public/communications.html",
+    "type": "text/html; charset=utf-8"
+  },
   "/clinic/activity/": {
     "path": "deploy/preview/public/activity.html",
     "type": "text/html; charset=utf-8"
@@ -294,6 +298,10 @@
   "/clinic/login/secretary/": {
     "path": "deploy/preview/public/secretary-login.html",
     "type": "text/html; charset=utf-8"
+  },
+  "/clinic/static/clinic/intake-assist.js": {
+    "path": "static/clinic/intake-assist.js",
+    "type": "text/javascript; charset=utf-8"
   },
   "/clinic/static/clinic/workspace.css": {
     "path": "static/clinic/workspace.css",

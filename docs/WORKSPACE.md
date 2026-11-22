@@ -1,5 +1,7 @@
 # Physician and patient workspace — 2026-11-19
 
+> Current identity note (2026-11-22): the owner's subsequent shared Supabase decision and deployed preview identity gate supersede historical standalone/CMS-only statements below. See [SHARED_SUPABASE_IDENTITY.md](SHARED_SUPABASE_IDENTITY.md) and the top of PROJECT_HANDOFF.md. Native private SHARED_AUTH_ENABLED stays off; standalone development features remain available.
+
 Public previews: [physician](https://drgerami-md.ir/clinic/), [patient](https://drgerami-md.ir/clinic/portal/), [account design](https://drgerami-md.ir/clinic/account/). All records are synthetic; clinical/account forms are disabled. Native runtime addresses remain `/dash/`, `/dash/portal/` and `/dash/account/`, with role-based routing after shared login. The website's `/admin/` remains content management.
 
 The physician sees actual aggregate visit counts, recent patients, today's appointments and follow-ups. `/dash/visits/` filters by patient, visit type or due follow-up. Patient records append in-person/online visits, complaint, note, assessment, plan, optional measured vitals with units and Jalali follow-up date. Marking a follow-up complete records an audit event; it does not send a message or create a calendar event. Online mode records the consultation type, without a built-in video service.

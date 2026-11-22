@@ -3,7 +3,7 @@ from datetime import timedelta, datetime, time
 
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import F, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
@@ -36,7 +36,7 @@ def doctor_dashboard():
         'advice_count':Advice.objects.count(),'visits_count':Visit.objects.count(),
         'online_count':Visit.objects.filter(mode='online').count(),
         'followup_count':Visit.objects.filter(follow_up_on__isnull=False,follow_up_on__lte=today,follow_up_done=False).count(),
-        'recent_patients':Patient.objects.annotate(last_visit=Max('visits__created_at')).order_by('-last_visit','-created_at')[:5],
+        'recent_patients':Patient.objects.annotate(last_visit=Max('visits__created_at')).order_by(F('last_visit').desc(nulls_last=True),'-created_at','pk')[:5],
         'today_appointments':Appointment.objects.filter(starts_at__date=today).exclude(status__in=['cancelled','conflict'])[:5],
         'recent_visits':Visit.objects.select_related('patient')[:5],
         'chart_points':points,'chart_total':sum(counts.values()),'today_label':format_jalali(today),
