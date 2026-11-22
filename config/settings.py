@@ -99,6 +99,7 @@ CSRF_FAILURE_VIEW = 'clinic.portal_api.csrf_failure'
 PASSWORD_RESET_TIMEOUT = 900
 
 CLINIC_PUBLIC_URL = os.environ.get('CLINIC_PUBLIC_URL', CLINIC_SITE+'/dash').rstrip('/')
+CLINIC_PREVIEW_EXPORT = os.getenv('CLINIC_PREVIEW_EXPORT','0') == '1'
 
 # Explicit activation gate: the public /clinic export never enables this bridge.
 SHARED_AUTH_ENABLED = os.getenv('SHARED_AUTH_ENABLED', '0') == '1'

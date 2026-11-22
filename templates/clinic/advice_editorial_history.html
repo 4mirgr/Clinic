@@ -1,0 +1,10 @@
+{% extends 'clinic/base.html' %}
+{% block title %}تاریخچه ویرایش توصیه{% endblock %}
+{% block crumb %}تاریخچه ویرایش توصیه{% endblock %}
+{% block content %}
+<div class="page-heading"><div><a class="back-link" href="{% url 'advice_edit' advice.pk %}">→ متن فعلی توصیه</a><h1>تاریخچه ویرایش توصیه</h1><p>{{ advice.title }}</p><p>این تاریخچه خصوصیِ ویرایش کتابخانه است؛ نسخه‌های تحویل‌شده بیمار تغییر نمی‌کنند.</p></div></div>
+<section class="card padded">
+{% for revision in page %}<article class="timeline-entry"><h2><a class="text-link" href="{{ revision.get_absolute_url }}">{{ revision.title }}</a></h2><p>ثبت‌کننده: {{ revision.actor.get_full_name|default:revision.actor.username }} <bdi>({{ revision.actor.username }})</bdi></p><p>زمان نسخه: {{ revision.advice_updated_at|date:'Y/m/d H:i:s' }} · ثبت در تاریخچه: {{ revision.created_at|date:'Y/m/d H:i:s' }}</p><span class="badge {% if not revision.is_approved %}amber{% endif %}">{% if revision.is_approved %}تأییدشده{% else %}پیش‌نویس{% endif %}</span>{% if revision.is_baseline %}<p class="hint">نسخهٔ موجود پیش از شروع تاریخچه؛ زمان نسخه از رکورد قبلی حفظ شده است. نسخه‌های قدیمی‌تر در دسترس نیستند.</p>{% endif %}<p><a class="text-link" href="{{ revision.get_absolute_url }}">مشاهده متن و منابع این نسخه ←</a></p></article>{% empty %}<p>برای این توصیه هنوز نسخه‌ای در تاریخچه ثبت نشده است؛ نسخهٔ موجود پیش از نخستین تغییر حفظ خواهد شد.</p>{% endfor %}
+{% if page.has_other_pages %}<nav class="pagination" aria-label="صفحه‌های تاریخچه">{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">صفحه قبل</a>{% endif %}<span>{{ page.number }} / {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a href="?page={{ page.next_page_number }}">صفحه بعد</a>{% endif %}</nav>{% endif %}
+</section>
+{% endblock %}

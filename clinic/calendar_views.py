@@ -7,11 +7,12 @@ from django.shortcuts import get_object_or_404,redirect,render
 from django.views.decorators.http import require_GET,require_POST,require_http_methods
 from django.utils import timezone
 
-from .access import booking_access_required,calendar_staff_required,role_for
+from .access import booking_access_required,calendar_staff_required,manager_required,role_for
 from .portal_api import PortalError,account_for,locked_account
 from .calendar_api import CalendarUnavailable,configured
 from .calendar_forms import AvailabilityForm,BookingForm,RescheduleForm,ScheduleForm
 from .calendar_models import Appointment,AvailabilityOverride,CalendarConnection,ScheduleSettings
+from .calendar_health import diagnose_calendar
 from .jalali import JalaliDateField,TO_PERSIAN,today_tehran
 from .models import AuditEvent
 from .scheduling import BookingError,available_slots,book_selected_slot,request_cancellation,reschedule_appointment,sync_appointment
@@ -29,7 +30,26 @@ def calendar_home(request):
     else:
         records = records.filter(Q(status__in=['pending','update_pending','cancel_pending','conflict_cancelling','conflict','attention'])|Q(status='confirmed',ends_at__gte=timezone.now())).order_by('starts_at')
     page = Paginator(records,25).get_page(request.GET.get('page'))
-    return render(request,'clinic/calendar.html',{'section':'calendar','schedule':schedule,'connection':connection,'google_configured':configured(),'form':BookingForm(actor=request.user),'appointments':page.object_list,'page':page,'calendar_all':all_appointments})
+    health = diagnose_calendar()
+    if role_for(request.user) != 'manager':
+        # Scheduling staff see readiness, not the connection's settings profile.
+        health = {key:health[key] for key in ('status','issues','local_ready','hours_ready','summary','preview')}
+        health['issues'] = [
+            {**issue, 'message': 'تنظیمات امن اتصال باید توسط مدیر تکمیل شود.'}
+            if issue['code'] in ('not_configured', 'invalid_configuration') else issue
+            for issue in health['issues']]
+    return render(request,'clinic/calendar.html',{'section':'calendar','schedule':schedule,'connection':connection,'calendar_health':health,'google_configured':configured(),'form':BookingForm(actor=request.user),'appointments':page.object_list,'page':page,'calendar_all':all_appointments})
+
+
+@manager_required
+@require_POST
+def connection_test(request):
+    result = diagnose_calendar(probe=True)
+    if result['probe_verified']:
+        messages.success(request, result['summary'])
+    else:
+        messages.error(request, ' '.join(issue['message'] for issue in result['issues']))
+    return redirect('calendar')
 
 
 @calendar_staff_required
@@ -91,7 +111,11 @@ def retry(request,pk):
 @require_POST
 def cancel(request,pk):
     get_object_or_404(Appointment,pk=pk)
-    appointment = request_cancellation(pk,request.user)
+    try:
+        appointment = request_cancellation(pk,request.user)
+    except BookingError as error:
+        messages.warning(request, str(error))
+        return redirect('calendar')
     messages.info(request,'وضعیت نوبت: '+appointment.get_status_display())
     return redirect('calendar')
 

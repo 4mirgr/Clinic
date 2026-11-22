@@ -20,13 +20,10 @@ class CalendarUnavailable(Exception):
 
 
 def configured():
-    if not all(getattr(settings,key,'') for key in ['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GOOGLE_TOKEN_ENCRYPTION_KEY']):
-        return False
-    try:
-        Fernet(settings.GOOGLE_TOKEN_ENCRYPTION_KEY.encode())
-    except (ValueError,TypeError):
-        return False
-    return settings.GOOGLE_REDIRECT_URI.startswith('https://')
+    # Keep direct OAuth/API calls aligned with the names-only health diagnostic.
+    from .calendar_health import configuration_issues
+    missing, invalid = configuration_issues()
+    return not missing and not invalid
 
 
 def timestamp(value):
@@ -68,6 +65,47 @@ class GoogleCalendar:
             return intervals
         except (KeyError,ValueError,TypeError,AttributeError):
             raise CalendarUnavailable() from None
+
+    def inspect_event(self, appointment):
+        """Read one app-owned event; return no provider body or identifying data."""
+        if appointment.google_event_id != appointment.pk.hex:
+            return {'state': 'unknown'}
+        response = self.request('GET', self.events_url+'/'+appointment.pk.hex,
+                                params={'fields': 'id,status,start,end,extendedProperties/private'})
+        if response.status_code in (404, 410):
+            return {'state': 'missing'}
+        if response.status_code != 200:
+            raise CalendarUnavailable()
+        try:
+            event = response.json()
+            if event['id'] != appointment.pk.hex:
+                raise ValueError()
+            if event.get('status') == 'cancelled':
+                # Google only guarantees the id on deleted-event tombstones.
+                # The exact stored app-owned id was checked before the GET;
+                # reconciliation additionally checks the confirmed source and
+                # connection generation. Never ignore an explicit foreign marker.
+                properties = event.get('extendedProperties', {})
+                if not isinstance(properties, dict):
+                    raise ValueError()
+                private = properties.get('private', {})
+                if not isinstance(private, dict):
+                    raise ValueError()
+                if 'appointment_id' in private and private['appointment_id'] != str(appointment.pk):
+                    raise ValueError()
+                return {'state': 'missing'}
+            if event['extendedProperties']['private']['appointment_id'] != str(appointment.pk):
+                raise ValueError()
+            if event.get('status') not in ('confirmed', 'tentative'):
+                raise ValueError()
+            start, end = timestamp(event['start']['dateTime']), timestamp(event['end']['dateTime'])
+            if end <= start:
+                raise ValueError()
+            if (start, end) == (appointment.starts_at, appointment.ends_at):
+                return {'state': 'matching'}
+            return {'state': 'moved', 'starts_at': start, 'ends_at': end}
+        except (KeyError, TypeError, ValueError, AttributeError):
+            return {'state': 'unknown'}
 
     def find_event(self,appointment,match_times=True):
         response = self.request('GET',self.events_url+'/'+appointment.pk.hex)

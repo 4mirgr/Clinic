@@ -1,0 +1,5 @@
+{% extends 'clinic/form.html' %}
+{% block content %}
+{% if advice %}<p><a class="button secondary" href="{% url 'advice_history' advice.pk %}">تاریخچه ویرایش توصیه</a></p>{% endif %}
+{{ block.super }}
+{% endblock %}

@@ -111,6 +111,8 @@ def reschedule_appointment(pk,day,selected,actor,provider=None):
     with transaction.atomic():
         schedule = ScheduleSettings.objects.select_for_update().get(pk=1)
         appointment = Appointment.objects.select_for_update().get(pk=pk)
+        if appointment.calendar_review_required:
+            raise BookingError('تغییر دستی تقویم نیازمند تعیین تکلیف پزشک است؛ ویرایش خودکار انجام نشد.')
         if appointment.status == 'update_pending' and appointment.starts_at == selected:
             return appointment
         if appointment.status != 'confirmed':
@@ -140,6 +142,10 @@ def sync_appointment(pk,actor=None,provider=None,force=False):
     with transaction.atomic():
         ScheduleSettings.objects.select_for_update().get(pk=1)
         appointment = Appointment.objects.select_for_update().get(pk=pk)
+        if appointment.calendar_review_required:
+            # A force retry must not recreate a manually deleted event or
+            # overwrite a manual move. The original local hold remains intact.
+            return appointment
         if appointment.status not in ['pending','update_pending','cancel_pending','conflict_cancelling','attention']:
             return appointment
         if not force and (appointment.next_retry_at > timezone.now() or appointment.sync_attempts >= 10):
@@ -218,6 +224,8 @@ def request_cancellation(pk,actor,provider=None):
     with transaction.atomic():
         ScheduleSettings.objects.select_for_update().get(pk=1)
         appointment = Appointment.objects.select_for_update().get(pk=pk)
+        if appointment.calendar_review_required:
+            raise BookingError('تغییر دستی تقویم نیازمند تعیین تکلیف پزشک است؛ لغو خودکار انجام نشد.')
         if appointment.status == 'cancelled':
             return appointment
         appointment.status = 'conflict_cancelling' if appointment.status in ['conflict','conflict_cancelling'] else 'cancel_pending'

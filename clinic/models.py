@@ -96,16 +96,44 @@ class Advice(models.Model):
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def save(self, *args, **kwargs):
-        if not self._state.adding:
-            fields = ('title','title_en','specialty','tags','body','source','source_metadata')
-            old = type(self).objects.filter(pk=self.pk).values(*fields).first()
-            if old and any(old[key] != getattr(self,key) for key in fields):
-                self.is_approved = False
-        self.search_text = search_document(self)
-        if kwargs.get('update_fields') is not None:
-            kwargs['update_fields'] = set(kwargs['update_fields']) | {'search_text','is_approved','updated_at'}
-        return super().save(*args, **kwargs)
+    def save(self, *args, reviewed=False, **kwargs):
+        from django.db import router, transaction
+        from .advice_revision_models import AdviceRevision, CONTENT_FIELDS, REVISION_FIELDS
+
+        using = kwargs.get('using') or router.db_for_write(type(self), instance=self)
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            if not update_fields:
+                return
+        with transaction.atomic(using=using):
+            old = type(self).objects.using(using).select_for_update().filter(pk=self.pk).first()
+            if old:
+                # Partial writes must never snapshot unsaved stale field values.
+                if update_fields is not None:
+                    for field in REVISION_FIELDS:
+                        if field not in update_fields:
+                            setattr(self, field, getattr(old, field))
+                    if not {'updated_by', 'updated_by_id'} & update_fields:
+                        self.updated_by_id = old.updated_by_id
+                content_changed = any(getattr(old, field) != getattr(self, field) for field in CONTENT_FIELDS)
+                if content_changed and not reviewed:
+                    self.is_approved = False
+                changed = any(getattr(old, field) != getattr(self, field) for field in REVISION_FIELDS)
+                if not changed:
+                    self.updated_by_id, self.updated_at = old.updated_by_id, old.updated_at
+                    self.search_text = old.search_text
+                    return
+                if not AdviceRevision.objects.using(using).filter(advice_id=self.pk).exists():
+                    # Existing rows have no recoverable earlier versions. Preserve
+                    # the known source updater/time, separately from capture time.
+                    AdviceRevision.capture(old, using=using, is_baseline=True)
+            self.search_text = search_document(self)
+            if update_fields is not None:
+                kwargs['update_fields'] = update_fields | {'search_text', 'is_approved', 'updated_at'}
+            result = super().save(*args, **kwargs)
+            AdviceRevision.capture(self, using=using)
+            return result
 
     class Meta:
         ordering = ['title']
@@ -221,3 +249,6 @@ class PrescriptionReference(models.Model):
         if not self._state.adding:
             raise ValidationError('نسخه ثبت‌شده قابل بازنویسی نیست.')
         return super().save(*args, **kwargs)
+
+
+from .advice_revision_models import AdviceRevision  # noqa: E402,F401

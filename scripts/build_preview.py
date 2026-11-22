@@ -85,7 +85,7 @@ def build(output):
     # Always replace inherited runtime values before importing Django. No
     # connection to the checkout database, real accounts or external services.
     with tempfile.TemporaryDirectory(prefix='clinic-public-preview-') as data_dir:
-        os.environ.update(CLINIC_ENV='development', DATABASE_URL='', CLINIC_DATA_DIR=data_dir,
+        os.environ.update(CLINIC_ENV='development', CLINIC_PREVIEW_EXPORT='1', SHARED_AUTH_ENABLED='0', DATABASE_URL='', CLINIC_DATA_DIR=data_dir,
                           CLINIC_PUBLIC_URL='https://drgerami-md.ir/clinic', CLINIC_PROXY_KEY='', GOOGLE_CLIENT_ID='', GOOGLE_CLIENT_SECRET='',
                           COMMUNICATIONS_ENABLED='0', EMAIL_HOST='', TELEGRAM_BOT_TOKEN='', WHATSAPP_ACCESS_TOKEN='', GOOGLE_TOKEN_ENCRYPTION_KEY='', GOOGLE_AUTH_CLIENT_ID='', GOOGLE_AUTH_CLIENT_SECRET='', SITE_ACCOUNT_URL='/dash/account/', DJANGO_SETTINGS_MODULE='config.settings',
                           DJANGO_ALLOWED_HOSTS='testserver,localhost,127.0.0.1',
@@ -131,6 +131,12 @@ def build(output):
         for guide in Advice.objects.exclude(catalog_key=None):
             pages[f'/dash/advice/{guide.pk}/print/']='guide-'+guide.catalog_key+'.html'
             pages[f'/dash/advice/{guide.pk}/edit/']='guide-'+guide.catalog_key+'-edit.html'
+        from clinic.advice_revision_models import AdviceRevision
+        for guide in Advice.objects.all():
+            label=guide.catalog_key or 'sample'
+            pages[f'/dash/advice/{guide.pk}/history/']=f'guide-{label}-history.html'
+            for revision in AdviceRevision.objects.filter(advice=guide):
+                pages[revision.get_absolute_url()]=f'guide-{label}-revision-{revision.pk}.html'
         manifest = {}
 
         def capture(route, filename):

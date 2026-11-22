@@ -1,8 +1,12 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views,education_views,workspace,google_signin,communication_views
+from clinic import views, views_auth, views_preferences,calendar_views,calendar_oauth,portal_api,advice_views,education_views,workspace,google_signin,communication_views,advice_revision_views,calendar_actions
 
 urlpatterns = [
+    path('dash/calendar/reconcile/', calendar_actions.apply_google_changes, name='calendar_reconcile'),
+    path('dash/advice/<uuid:pk>/history/', advice_revision_views.history, name='advice_history'),
+    path('dash/advice/<uuid:pk>/history/<uuid:revision_pk>/', advice_revision_views.revision_detail, name='advice_revision_detail'),
+    path('dash/calendar/test/', calendar_views.connection_test, name='calendar_connection_test'),
     path('dash/api/communications/telegram/link', communication_views.telegram_link),
     path('dash/api/communications/telegram/webhook', communication_views.telegram_webhook),
     path('dash/communications/', communication_views.console, name='communications'),

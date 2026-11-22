@@ -173,20 +173,20 @@ def advice_list(request):
 @manager_required
 @require_http_methods(['GET','POST'])
 def advice_edit(request, pk=None):
-    advice = get_object_or_404(Advice,pk=pk) if pk else None
-    form = AdviceForm(request.POST if request.method == 'POST' else None,instance=advice)
-    if request.method == 'POST' and form.is_valid():
+    if request.method == 'POST':
         with transaction.atomic():
-            advice = form.save(commit=False)
-            advice.updated_by = request.user
-            approve = form.cleaned_data['is_approved']
-            advice.save()
-            if approve and not advice.is_approved:
-                advice.is_approved = True
-                advice.save()
-            audit(request,'advice.save',advice.pk)
-        return redirect('advice_print', pk=advice.pk)
-    return render(request,'clinic/form.html',{'section':'advice','form':form,'title':'ویرایش توصیه' if pk else 'توصیه جدید','description':'تیترها و بندها را در سطرهای جدا بنویسید. پیش از ارائه به بیمار، متن را بازبینی و تأیید کنید.','back_url':'advice'})
+            advice = get_object_or_404(Advice.objects.select_for_update(),pk=pk) if pk else None
+            form = AdviceForm(request.POST, instance=advice)
+            if form.is_valid():
+                advice = form.save(commit=False)
+                advice.updated_by = request.user
+                advice.save(reviewed=form.cleaned_data['is_approved'])
+                audit(request,'advice.save',advice.pk)
+                return redirect('advice_print', pk=advice.pk)
+    else:
+        advice = get_object_or_404(Advice,pk=pk) if pk else None
+        form = AdviceForm(instance=advice)
+    return render(request,'clinic/advice_revision_form.html',{'section':'advice','form':form,'advice':advice,'title':'ویرایش توصیه' if pk else 'توصیه جدید','description':'تیترها و بندها را در سطرهای جدا بنویسید. پیش از ارائه به بیمار، متن را بازبینی و تأیید کنید.','back_url':'advice'})
 
 
 @manager_required

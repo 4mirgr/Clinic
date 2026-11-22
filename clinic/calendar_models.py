@@ -62,6 +62,8 @@ class Appointment(models.Model):
     status = models.CharField(max_length=20,choices=STATUS,default='pending')
     connection_generation = models.UUIDField()
     google_event_id = models.CharField(max_length=64,blank=True)
+    calendar_review_required = models.BooleanField(default=False)
+    calendar_checked_at = models.DateTimeField(null=True, blank=True)
     sync_attempts = models.PositiveSmallIntegerField(default=0)
     next_retry_at = models.DateTimeField(default=timezone.now)
     last_error = models.CharField(max_length=250,blank=True)

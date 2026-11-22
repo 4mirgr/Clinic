@@ -1,5 +1,7 @@
 # Project continuity
 
+Latest 2026-11-22 owner instruction authorizes fixing real Google Calendar access. Target is `dr.gerami.md@gmail.com`; Google changes to app-owned appointments are authoritative and should be adopted locally, except unresolved booking conflicts. Same shared website account across entries is mandatory, with no second signup. A separately approved synthetic create/edit/delete test via the chat connector succeeded and was cleaned up; that connector is not the native backend credential. Preserve the shared preview gate, zero paid-hosting policy and private-backend activation boundaries.
+
 Current preview deployment and live identity checks are recorded at the top of `PROJECT_HANDOFF.md`; older ungated-preview statements are historical. Preserve `global_fetch_strictly_public` for the same-zone session front door, existing observability and only the two Clinic routes. The public website toolbar reference does not authorize migrating Django or changing native navigation.
 
 Latest 2026-11-19 continuation: owner keeps Clinic synthetic/read-only and without paid hosting, but explicitly requests shared website login and role-aware doctor/patient entry at `/clinic/` and `/clinic/portal/`. The optional preview identity wrapper may verify the website session and gate HTML; it must not activate medical writes, uploads, native hosting or patient linking. Native `SHARED_AUTH_ENABLED` remains off until private hosting is authorized and ready.
