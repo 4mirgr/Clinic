@@ -8,4 +8,19 @@
 <symbol id="pulse" viewBox="0 0 24 24"><path d="M2 12h5l3-8 4 16 3-8h5"/></symbol>
 <symbol id="shield" viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 6-9 10-9 10S3 18 3 12V6zM8 12l3 3 5-6"/></symbol>
 <symbol id="video" viewBox="0 0 24 24"><rect x="2" y="5" width="14" height="14" rx="3"/><path d="m16 10 6-4v12l-6-4"/></symbol>
+<symbol id="upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></symbol>
+<symbol id="menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+<symbol id="search" viewBox="0 0 24 24"><path d="M21 21l-6-6M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0"/></symbol>
+<symbol id="message" viewBox="0 0 24 24"><path d="M21 4H3v14h5v4l6-4h7zM7 9h10M7 13h7"/></symbol>
+<symbol id="file" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5M8 12h8M8 16h6"/></symbol>
+<symbol id="settings" viewBox="0 0 24 24"><path d="M3 7h9m5 0h4M3 17h3m5 0h10M16 7a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0M11 17a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/></symbol>
+<symbol id="pill" viewBox="0 0 24 24"><path d="M4 20a6 6 0 0 1 0-8l8-8a6 6 0 0 1 8 8l-8 8a6 6 0 0 1-8 0zM8 8l8 8"/></symbol>
+<symbol id="external" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 5H4v15h15v-6"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+<symbol id="save" viewBox="0 0 24 24"><path d="M3 3h15l3 3v15H3zM7 3v6h9V3M7 21v-8h10v8"/></symbol>
+<symbol id="edit" viewBox="0 0 24 24"><path d="M4 15 16 3l5 5L9 20l-6 1zM13 6l5 5"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="m3 12 6 6L21 6"/></symbol>
+<symbol id="print" viewBox="0 0 24 24"><path d="M6 8V3h12v5M6 17H3V9h18v8h-3M6 14h12v7H6z"/></symbol>
+<symbol id="sync" viewBox="0 0 24 24"><path d="M20 4v5h-5M4 20v-5h5M4 9a8 8 0 0 1 15-2M20 15a8 8 0 0 1-15 2"/></symbol>
+<symbol id="close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
 </defs></svg>

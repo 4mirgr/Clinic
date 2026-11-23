@@ -11,7 +11,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','deploy/preview/preview.css','static/clinic/education.css','static/clinic/print-pager.js','static/clinic/workspace.css','static/clinic/workspace.js','static/clinic/portal.css','static/clinic/intake-assist.js'))).hexdigest()[:12]
+ASSET_VERSION = hashlib.sha256(b''.join((ROOT / name).read_bytes() for name in ('deploy/preview/preview.js','deploy/preview/preview.css','static/clinic/education.css','static/clinic/print-pager.js','static/clinic/workspace.css','static/clinic/app.css','static/clinic/workspace-icons.svg','static/clinic/workspace.js','static/clinic/portal.css','static/clinic/intake-assist.js'))).hexdigest()[:12]
 sys.path.insert(0, str(ROOT))
 
 
@@ -21,6 +21,7 @@ class ReadOnlyHTML(HTMLParser):
         self.parts = []
         self.skip_script = False
         self.theme_form = False
+        self.local_search = False
 
     def handle_decl(self, declaration):
         self.parts.append(f'<!{declaration}>')
@@ -37,19 +38,28 @@ class ReadOnlyHTML(HTMLParser):
         attributes = {key: value for key, value in attrs if not key.startswith('on') and key != 'data-portal-api'}
         if tag == 'form':
             self.theme_form = 'theme-form' in (attributes.get('class') or '').split()
+            # These three search forms already have local-only preview handlers.
+            self.local_search = ('top-search' in (attributes.get('class') or '').split()
+                                 or attributes.get('role') == 'search')
             attributes.pop('method', None)
             attributes['action'] = '#'
             attributes['data-preview-form'] = ''
         if tag in ('input', 'textarea', 'select') and attributes.get('name') not in ('q','specialty','advice_ids'):
             attributes['disabled'] = ''
-        if tag == 'button' and attributes.get('type', 'submit') == 'submit' and not self.theme_form and 'data-demo-combine' not in attributes:
+        if tag == 'button' and attributes.get('type', 'submit') == 'submit' and not self.theme_form and not self.local_search and 'data-demo-combine' not in attributes:
             attributes['disabled'] = ''
         if tag == 'option' and attributes.get('value') == '11111111-1111-4111-8111-111111111111':
             attributes['selected'] = ''
-        if attributes.get('href') in ('/clinic/static/clinic/education.css','/clinic/static/clinic/workspace.css','/clinic/static/clinic/portal.css'):
+        if attributes.get('href') in ('/clinic/static/clinic/app.css','/clinic/static/clinic/education.css','/clinic/static/clinic/workspace.css','/clinic/static/clinic/portal.css'):
             attributes['href'] += '?v='+ASSET_VERSION
         if attributes.get('href') == '/account/':
             attributes['href'] = '/clinic/account/'
+        href = attributes.get('href', '')
+        if href.startswith('/clinic/static/clinic/workspace-icons.svg#'):
+            asset, fragment = href.split('#')
+            attributes['href'] = f'{asset}?v={ASSET_VERSION}#{fragment}'
+        if href == '/clinic/prescriptions/?patient=11111111-1111-4111-8111-111111111111':
+            attributes['href'] = '/clinic/patients/11111111-1111-4111-8111-111111111111/prescriptions/'
         rendered = ''.join(f' {key}' if value is None else f' {key}="{html.escape(value, quote=True)}"' for key, value in attributes.items())
         self.parts.append(f'<{tag}{rendered}>')
         if tag == 'body':
@@ -65,6 +75,7 @@ class ReadOnlyHTML(HTMLParser):
             self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css?v={ASSET_VERSION}"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/workspace.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/intake-assist.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
         if tag == 'form':
             self.theme_form = False
+            self.local_search = False
         self.parts.append(f'</{tag}>')
 
     def handle_data(self, data):
@@ -127,20 +138,33 @@ def build(output):
             '/dash/calendar/settings/': 'calendar-settings.html', '/dash/calendar/availability/': 'availability.html',
             '/dash/communications/':'communications.html', '/dash/activity/': 'activity.html', '/dash/visits/':'visits.html','/dash/prescriptions/':'prescriptions.html',
             patient.get_absolute_url()+'summary/': 'patient-summary.html',
+            patient.get_absolute_url()+'summary/edit/': 'patient-summary-edit.html',
         }
         for guide in Advice.objects.exclude(catalog_key=None):
             pages[f'/dash/advice/{guide.pk}/print/']='guide-'+guide.catalog_key+'.html'
             pages[f'/dash/advice/{guide.pk}/edit/']='guide-'+guide.catalog_key+'-edit.html'
         from clinic.advice_revision_models import AdviceRevision
+        # Keep existing bookmarks to the synthetic guide's initial revision
+        # when a new temporary database assigns that fixture a fresh UUID.
+        published_manifest = json.loads((ROOT/'deploy/preview/public/manifest.json').read_text())
+        revision_paths = {}
         for guide in Advice.objects.all():
             label=guide.catalog_key or 'sample'
             pages[f'/dash/advice/{guide.pk}/history/']=f'guide-{label}-history.html'
-            for revision in AdviceRevision.objects.filter(advice=guide):
-                pages[revision.get_absolute_url()]=f'guide-{label}-revision-{revision.pk}.html'
+            revisions = list(AdviceRevision.objects.filter(advice=guide))
+            for revision in revisions:
+                route = revision.get_absolute_url()
+                prefix = f'deploy/preview/public/guide-{label}-revision-'
+                previous = [path for path, asset in published_manifest.items() if asset['path'].startswith(prefix)]
+                public_route = previous[0] if len(revisions) == len(previous) == 1 else route.replace('/dash/', '/clinic/')
+                revision_paths[route.replace('/dash/', '/clinic/')] = public_route
+                pages[route] = f"guide-{label}-revision-{public_route.rstrip('/').split('/')[-1]}.html"
         manifest = {}
 
         def capture(route, filename):
             source_route='/dash/advice/?patient='+str(patient.pk) if route==patient.get_absolute_url()+'advice/' else route
+            if route == patient_rx:
+                source_route = f'/dash/prescriptions/?patient={patient.pk}'
             response = client.get(source_route)
             if response.status_code != 200:
                 raise RuntimeError(f'Cannot export {route}: HTTP {response.status_code}')
@@ -149,10 +173,14 @@ def build(output):
             rendered = ''.join(parser.parts).replace('انتخاب تک‌توصیهٔ تأییدشده','بانک توصیه‌ها و چاپ')
             if route == '/dash/advice/' or route==patient.get_absolute_url()+'advice/':
                 rendered=rendered.replace('<section class="card education-library"', '<p><a href="/clinic/advice/sample.pdf">دریافت نمونه PDF با وزیرمتن و QR آزمایشی</a></p><section class="card education-library"')
-                rendered=rendered.replace('<button class="button primary" type="submit" disabled="">بازبینی و آماده‌سازی چاپ</button>','<button class="button primary" type="button" data-demo-combine>ساخت پیش‌نمایش چاپ</button>')
+            for source, public in revision_paths.items():
+                rendered = rendered.replace(source, public)
             (output / filename).write_text('\n'.join(line.rstrip() for line in rendered.splitlines())+'\n')
-            manifest[route.replace('/dash/', '/clinic/')] = {'path':'deploy/preview/public/'+filename, 'type':'text/html; charset=utf-8'}
+            public_route = route.replace('/dash/', '/clinic/')
+            manifest[revision_paths.get(public_route, public_route)] = {'path':'deploy/preview/public/'+filename, 'type':'text/html; charset=utf-8'}
 
+        patient_rx = patient.get_absolute_url() + 'prescriptions/'
+        pages[patient_rx] = 'patient-prescriptions.html'
         for route, filename in pages.items():
             capture(route, filename)
         qr = client.get('/dash/advice/qr/')

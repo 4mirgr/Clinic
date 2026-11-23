@@ -40,6 +40,9 @@ try:
         output=ROOT/'test-results'
         output.mkdir(exist_ok=True)
         page.screenshot(path=str(output/'clinic-preview-desktop.png'),full_page=True)
+        page.locator('.action-bar').get_by_role('link', name='ثبت نسخه', exact=True).click()
+        expect(page.locator('.provider-preferred')).to_contain_text('ثبت نسخه در دکترنکست')
+        page.go_back()
         page.get_by_role('button',name='تغییر حالت نمایش').click()
         assert page.locator('html').get_attribute('data-theme') == 'dark'
         page.set_viewport_size({'width':390,'height':844})
@@ -50,6 +53,14 @@ try:
         page.get_by_role('link',name='پرونده بیماران').click()
         page.locator('a[href="/clinic/patients/11111111-1111-4111-8111-111111111111/"]').first.click()
         expect(page.get_by_role('heading',name='بیمار آزمایشی',exact=True)).to_be_visible()
+        actions = page.get_by_role('navigation', name='اقدام‌های پرونده بیمار')
+        for link in actions.get_by_role('link').all():
+            assert link.bounding_box()['height'] >= 44
+            assert link.locator('svg use').evaluate('(e) => e.getBBox().width > 0')
+        actions.get_by_role('link', name='ثبت نسخه', exact=True).click()
+        expect(page.locator('.patient-context')).to_contain_text('بیمار آزمایشی')
+        expect(page.locator('[name=reference]')).to_be_disabled()
+        page.get_by_role('link', name='بازگشت به پرونده').click()
         assert page.locator('[name=note]').is_disabled()
         assert page.locator('input[type=file]').is_disabled()
         assert page.evaluate('document.documentElement.scrollWidth') <= 390
@@ -130,7 +141,7 @@ try:
         expect(page.get_by_role('heading',name='ویزیت‌ها و پیگیری',exact=True)).to_be_visible()
         page.goto(base+'/clinic/calendar/')
         expect(page.locator('[data-calendar-status]')).to_be_visible()
-        expect(page.get_by_role('link',name='باز کردن تقویم واقعی گوگل ↗')).to_be_visible()
+        expect(page.get_by_role('link',name='باز کردن تقویم واقعی گوگل')).to_be_visible()
         assert page.get_by_role('button',name='اتصال حساب گوگل',exact=True).count()==0
         page.goto(base+'/clinic/advice/22222222-2222-4222-8222-222222222222/edit/')
         page.get_by_role('link',name='تاریخچه ویرایش توصیه',exact=True).click()

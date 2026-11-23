@@ -389,7 +389,8 @@ class ClinicalWorkspaceAcceptance(LiveServerTestCase):
             page.get_by_label('برنامه درمان و پیگیری',exact=True).fill('برنامه آزمایشی')
             page.get_by_role('button',name='ثبت در خط زمانی').click();page.wait_for_url('**/dash/patients/*/')
             self.assertIn('پیگیری آنلاین آزمایشی',page.locator('#visits').inner_text())
-            page.goto(self.live_server_url+'/dash/prescriptions/?patient='+str(patient.pk))
+            page.get_by_role('navigation', name='اقدام‌های پرونده بیمار').get_by_role('link', name='ثبت نسخه').click()
+            self.assertEqual(page.locator('[name=patient]').input_value(), str(patient.pk))
             context.route('https://panel.drnext.ir/**',lambda route:route.fulfill(status=200,content_type='text/html',body='<html><body>Provider test stub</body></html>'))
             with context.expect_page() as opened:
                 page.locator('[data-prescription-window]').first.click()

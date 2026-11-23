@@ -79,6 +79,10 @@
     "path": "deploy/preview/public/patient-summary.html",
     "type": "text/html; charset=utf-8"
   },
+  "/clinic/patients/11111111-1111-4111-8111-111111111111/summary/edit/": {
+    "path": "deploy/preview/public/patient-summary-edit.html",
+    "type": "text/html; charset=utf-8"
+  },
   "/clinic/advice/173427b9-5813-538b-91e8-ba3fc82a1b7c/print/": {
     "path": "deploy/preview/public/guide-hypertension.html",
     "type": "text/html; charset=utf-8"
@@ -469,6 +473,10 @@
   },
   "/clinic/advice/0a967d0a-c7d1-5e61-9b48-87141efa5fb0/history/f7fb47a0-63bb-4cde-aa66-3f6820390539/": {
     "path": "deploy/preview/public/guide-allergic-rhinitis-revision-f7fb47a0-63bb-4cde-aa66-3f6820390539.html",
+    "type": "text/html; charset=utf-8"
+  },
+  "/clinic/patients/11111111-1111-4111-8111-111111111111/prescriptions/": {
+    "path": "deploy/preview/public/patient-prescriptions.html",
     "type": "text/html; charset=utf-8"
   },
   "/clinic/advice/qr/": {

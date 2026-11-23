@@ -8,7 +8,7 @@
   <form class="search-form" method="get" role="search">
     <label class="sr-only" for="advice-search">جست‌وجوی توصیه تأییدشده</label>
     <input id="advice-search" name="q" value="{{ q }}" placeholder="جست‌وجوی عنوان، متن یا برچسب…" maxlength="200">
-    <button class="button primary" type="submit">جست‌وجو</button>
+    <button class="button primary" type="submit">{% include 'clinic/icon.html' with name='search' %} جست‌وجو</button>
   </form>
   <div class="advice-grid">
     {% for advice in page %}

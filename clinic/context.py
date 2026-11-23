@@ -12,7 +12,7 @@ def clinic_context(request):
         theme = ''
     return {'clinic_name': settings.CLINIC_NAME, 'clinic_title': 'متخصص داخلی',
             'clinic_site': settings.CLINIC_SITE, 'clinic_role': role_for(request.user),
-            'interface_theme': theme,
+            'interface_theme': theme, 'preview_export': settings.CLINIC_PREVIEW_EXPORT,
             'shared_patient_staff': getattr(settings,'SHARED_AUTH_ENABLED',False) and role_for(request.user)=='secretary',
             'shared_auth_enabled': getattr(settings,'SHARED_AUTH_ENABLED',False),
             'inside_clinic':request.path == '/dash' or request.path.startswith('/dash/')}

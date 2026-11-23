@@ -227,7 +227,7 @@ class EducationLibraryTests(TestCase):
     def test_patient_entry_opens_full_catalog_and_final_packet_omits_editorial_metadata(self):
         self.load()
         page=self.client.get(self.patient.get_absolute_url())
-        self.assertRegex(page.content.decode(),r'href="/dash/advice/\?patient='+str(self.patient.pk)+r'">افزودن توصیه برای بیمار</a>')
+        self.assertRegex(page.content.decode(),r'href="/dash/advice/\?patient='+str(self.patient.pk)+r'"><svg[^>]*aria-hidden="true".*?</svg>\s*افزودن توصیه برای بیمار</a>')
         guide=Advice.objects.get(catalog_key='gerd')
         token=self.prepare([guide.pk])
         review=self.client.post('/dash/advice/bundles/prepare/',{'patient':str(self.patient.pk),'advice_ids':[str(guide.pk)]})
