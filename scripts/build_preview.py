@@ -72,7 +72,7 @@ class ReadOnlyHTML(HTMLParser):
         if self.skip_script:
             return
         if tag == 'head':
-            self.parts.append(f'<link rel="icon" href="/clinic/static/clinic/favicon.svg"><link rel="stylesheet" href="/clinic/preview.css?v={ASSET_VERSION}"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/workspace.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/intake-assist.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
+            self.parts.append(f'<link rel="stylesheet" href="/clinic/preview.css?v={ASSET_VERSION}"><script src="/clinic/static/clinic/print-pager.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/workspace.js?v={ASSET_VERSION}" defer></script><script src="/clinic/static/clinic/intake-assist.js?v={ASSET_VERSION}" defer></script><script src="/clinic/preview.js?v={ASSET_VERSION}" defer></script>')
         if tag == 'form':
             self.theme_form = False
             self.local_search = False
@@ -198,6 +198,9 @@ def build(output):
         for route, filename in [('/dash/account/','shared-account.html'),('/dash/login/','login.html'),('/dash/login/manager/','manager-login.html'),('/dash/login/secretary/','secretary-login.html')]:
             capture(route, filename)
         assets = {
+            'app-icons/favicon.ico': 'image/x-icon',
+            'app-icons/clinic.webmanifest': 'application/manifest+json',
+            **{f'app-icons/{name}.png': 'image/png' for name in ('icon-180', 'icon-192', 'icon-512', 'maskable-512')},
             'intake-assist.js':'text/javascript; charset=utf-8',
             'workspace.css':'text/css; charset=utf-8', 'workspace.js':'text/javascript; charset=utf-8','workspace-icons.svg':'image/svg+xml',
             'print-pager.js':'text/javascript; charset=utf-8', 'education.css':'text/css; charset=utf-8', 'education.js':'text/javascript; charset=utf-8', 'brand/logo.webp':'image/webp',

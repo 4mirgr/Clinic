@@ -507,6 +507,30 @@
     "path": "deploy/preview/public/secretary-login.html",
     "type": "text/html; charset=utf-8"
   },
+  "/clinic/static/clinic/app-icons/favicon.ico": {
+    "path": "static/clinic/app-icons/favicon.ico",
+    "type": "image/x-icon"
+  },
+  "/clinic/static/clinic/app-icons/clinic.webmanifest": {
+    "path": "static/clinic/app-icons/clinic.webmanifest",
+    "type": "application/manifest+json"
+  },
+  "/clinic/static/clinic/app-icons/icon-180.png": {
+    "path": "static/clinic/app-icons/icon-180.png",
+    "type": "image/png"
+  },
+  "/clinic/static/clinic/app-icons/icon-192.png": {
+    "path": "static/clinic/app-icons/icon-192.png",
+    "type": "image/png"
+  },
+  "/clinic/static/clinic/app-icons/icon-512.png": {
+    "path": "static/clinic/app-icons/icon-512.png",
+    "type": "image/png"
+  },
+  "/clinic/static/clinic/app-icons/maskable-512.png": {
+    "path": "static/clinic/app-icons/maskable-512.png",
+    "type": "image/png"
+  },
   "/clinic/static/clinic/intake-assist.js": {
     "path": "static/clinic/intake-assist.js",
     "type": "text/javascript; charset=utf-8"

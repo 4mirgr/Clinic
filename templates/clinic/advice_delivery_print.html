@@ -1,7 +1,7 @@
 {% load static clinic_dates %}
 <!doctype html>
 <html lang="fa" dir="rtl" data-theme="{{ interface_theme }}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="{% static 'clinic/favicon.svg' %}" type="image/svg+xml"><title>{{ delivery.title }} | {{ clinic_name }}</title><script src="{% static 'clinic/theme-init.js' %}"></script><link rel="stylesheet" href="{% static 'clinic/app.css' %}"><link rel="stylesheet" href="{% static 'clinic/education.css' %}"><script src="{% static 'clinic/app.js' %}" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>{{ delivery.title }} | {{ clinic_name }}</title><script src="{% static 'clinic/theme-init.js' %}"></script><link rel="stylesheet" href="{% static 'clinic/app.css' %}"><link rel="stylesheet" href="{% static 'clinic/education.css' %}"><script src="{% static 'clinic/app.js' %}" defer></script>{% include 'clinic/app_icons.html' %}</head>
 <body class="print-body">
 <nav class="print-toolbar">{% if manager %}<a class="button ghost" href="{{ delivery.patient.get_absolute_url }}#advice-history">→ پرونده بیمار</a>{% else %}<a class="button ghost" href="{% url 'patient_portal' %}#advice-history">→ توصیه‌های من</a>{% endif %}<button type="button" class="button primary" data-print>چاپ / ذخیره PDF</button></nav>
 <main class="brochure">{% include 'clinic/education/watermark.html' %}
