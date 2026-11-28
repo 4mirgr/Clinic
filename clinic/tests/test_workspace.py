@@ -1,9 +1,13 @@
+from datetime import datetime, time, timedelta
+from uuid import uuid4
+
 from unittest.mock import Mock, patch
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
-from clinic.models import Patient, PortalAccount, PatientIntakeSubmission, PatientRecordChange, Visit, PrescriptionReference, GoogleIdentity
+from clinic.jalali import TZ, today_tehran
+from clinic.models import Appointment, Patient, PortalAccount, PatientIntakeSubmission, PatientRecordChange, Visit, PrescriptionReference, GoogleIdentity
 
 
 class WorkspaceTests(TestCase):
@@ -99,6 +103,31 @@ class WorkspaceTests(TestCase):
         self.client.force_login(secretary)
         self.assertEqual(self.client.get('/dash/prescriptions/').status_code,403)
         self.assertEqual(self.client.get('/dash/visits/').status_code,403)
+
+    def test_prescriptions_opened_from_record_keep_patient_context(self):
+        other = Patient.objects.create(first_name='بیمار', last_name='دوم', phone='09111111111')
+        for patient, reference in [(self.patient, 'FIRST-RX'), (other, 'OTHER-RX')]:
+            PrescriptionReference.objects.create(patient=patient, provider='drnext', reference=reference, author=self.doctor)
+        url = f'/dash/prescriptions/?patient={self.patient.pk}'
+        page = self.client.get(url)
+        self.assertContains(page, 'FIRST-RX')
+        self.assertNotContains(page, 'OTHER-RX')
+        self.assertContains(self.client.get('/dash/prescriptions/'), 'OTHER-RX')
+        data = {'patient': str(other.pk), 'provider': 'drnext', 'reference': 'NEW-RX'}
+        rejected = self.client.post(url, data)
+        self.assertIn('patient', rejected.context['form'].errors)
+        self.assertFalse(PrescriptionReference.objects.filter(reference='NEW-RX').exists())
+        data['patient'] = str(self.patient.pk)
+        self.assertRedirects(self.client.post(url, data), self.patient.get_absolute_url())
+
+    def test_today_schedule_shows_first_five_in_chronological_order(self):
+        start = datetime.combine(today_tehran(), time(9), tzinfo=TZ)
+        slots = [start + timedelta(hours=i) for i in range(6)]
+        for slot in slots:
+            Appointment.objects.create(patient=self.patient, created_by=self.doctor, starts_at=slot,
+                ends_at=slot + timedelta(minutes=15), status='confirmed', connection_generation=uuid4())
+        schedule = self.client.get('/dash/').context['today_appointments']
+        self.assertEqual([visit.starts_at for visit in schedule], slots[:5])
 
     def test_shared_account_reuses_username_password_and_patient_session(self):
         self.client.logout()

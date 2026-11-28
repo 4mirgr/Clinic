@@ -1,5 +1,6 @@
 """Physician workspace data and protected clinical worklists."""
 from datetime import timedelta, datetime, time
+from uuid import UUID
 
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -37,7 +38,7 @@ def doctor_dashboard():
         'online_count':Visit.objects.filter(mode='online').count(),
         'followup_count':Visit.objects.filter(follow_up_on__isnull=False,follow_up_on__lte=today,follow_up_done=False).count(),
         'recent_patients':Patient.objects.annotate(last_visit=Max('visits__created_at')).order_by(F('last_visit').desc(nulls_last=True),'-created_at','pk')[:5],
-        'today_appointments':Appointment.objects.filter(starts_at__date=today).exclude(status__in=['cancelled','conflict'])[:5],
+        'today_appointments':Appointment.objects.filter(starts_at__date=today).exclude(status__in=['cancelled','conflict']).order_by('starts_at', 'pk')[:5],
         'recent_visits':Visit.objects.select_related('patient')[:5],
         'chart_points':points,'chart_total':sum(counts.values()),'today_label':format_jalali(today),
         'chart_start':format_jalali(dates[0]),'chart_end':format_jalali(today)}
@@ -71,7 +72,24 @@ def visits(request):
 @manager_required
 @require_http_methods(['GET','POST'])
 def prescriptions(request):
-    form=PrescriptionReferenceForm(request.POST if request.method=='POST' else None,initial={'patient':request.GET.get('patient'),'provider':'drnext'})
+    patient_key = request.GET.get('patient')
+    selected = None
+    records = PrescriptionReference.objects.select_related('patient')
+    form = PrescriptionReferenceForm(
+        request.POST if request.method == 'POST' else None,
+        initial={'patient': patient_key, 'provider': 'drnext'},
+    )
+    if patient_key:
+        try:
+            patients = Patient.objects.filter(pk=UUID(patient_key))
+        except ValueError:
+            patients = Patient.objects.none()
+        selected = patients.first()
+        form.fields['patient'].queryset = patients
+        records = records.filter(patient__in=patients)
+        if selected is None:
+            from django.contrib import messages
+            messages.error(request, 'پرونده پیدا نشد. از فهرست بیماران دوباره وارد پرونده شوید.')
     if request.method=='POST' and form.is_valid():
         with transaction.atomic():
             record=form.save(commit=False)
@@ -79,12 +97,7 @@ def prescriptions(request):
             record.save()
             AuditEvent.objects.create(actor=request.user,action='prescription.reference',target=str(record.pk))
         return redirect(record.patient)
-    import uuid
-    try:
-        selected=Patient.objects.filter(pk=uuid.UUID(request.GET.get('patient',''))).first()
-    except ValueError:
-        selected=None
-    return render(request,'clinic/prescriptions.html',{'section':'prescriptions','form':form,'provider_links':PROVIDER_LINKS,'selected_patient':selected,'page':Paginator(PrescriptionReference.objects.select_related('patient'),20).get_page(request.GET.get('page'))})
+    return render(request,'clinic/prescriptions.html',{'section':'prescriptions','form':form,'provider_links':PROVIDER_LINKS,'selected_patient':selected,'page':Paginator(records,20).get_page(request.GET.get('page'))})
 
 
 @require_GET
